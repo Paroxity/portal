@@ -2,7 +2,7 @@ package session
 
 import (
 	"fmt"
-	"github.com/paroxity/wormhole/server"
+	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 	"log"

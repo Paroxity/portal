@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/paroxity/wormhole/config"
+	"github.com/paroxity/portal/config"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"go.uber.org/atomic"
 )

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/paroxity/wormhole/config"
-	"github.com/paroxity/wormhole/query"
-	"github.com/paroxity/wormhole/session"
+	"github.com/paroxity/portal/config"
+	"github.com/paroxity/portal/query"
+	"github.com/paroxity/portal/session"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 	"log"

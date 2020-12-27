@@ -3,7 +3,7 @@ package session
 import (
 	"errors"
 	"github.com/google/uuid"
-	"github.com/paroxity/wormhole/server"
+	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"go.uber.org/atomic"

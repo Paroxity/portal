@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/paroxity/wormhole/server"
+	"github.com/paroxity/portal/server"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
@@ -39,7 +39,7 @@ func init() {
 
 func Load() error {
 	c := config{}
-	c.Query.MOTD = "Wormhole"
+	c.Query.MOTD = "Portal"
 	c.Proxy.Groups = []string{"Hub"}
 	c.Proxy.DefaultGroup = "Hub"
 	c.Proxy.Servers = append(c.Proxy.Servers, ServerInfo{

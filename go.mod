@@ -1,4 +1,4 @@
-module github.com/paroxity/wormhole
+module github.com/paroxity/portal
 
 go 1.14
 

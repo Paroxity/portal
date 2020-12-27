@@ -3,10 +3,12 @@ package config
 import (
 	"fmt"
 	"github.com/paroxity/portal/server"
+	"github.com/sandertv/gophertunnel/minecraft/resource"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 )
 
 type config struct {
@@ -19,9 +21,12 @@ type config struct {
 		Players []string
 	}
 	Proxy struct {
-		Groups       []string
-		DefaultGroup string
-		Servers      []ServerInfo
+		Groups         []string
+		DefaultGroup   string
+		Servers        []ServerInfo
+		Authentication bool
+		ResourcesDir   string
+		ForceTextures  bool
 	}
 }
 
@@ -45,8 +50,9 @@ func Load() error {
 	c.Proxy.Servers = append(c.Proxy.Servers, ServerInfo{
 		Name:    "Hub1",
 		Group:   "Hub",
-		Address: "127.0.0.1",
+		Address: "127.0.0.1:19133",
 	})
+	c.Proxy.Authentication = true
 
 	if _, err := os.Stat("config.yml"); os.IsNotExist(err) {
 		data, err := yaml.Marshal(c)
@@ -86,6 +92,20 @@ func Load() error {
 			panic(err)
 		}
 	}
+
+	authentication = c.Proxy.Authentication
+	files, err := ioutil.ReadDir(c.Proxy.ResourcesDir)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, file := range files {
+		pack, err := resource.Compile(path.Join(c.Proxy.ResourcesDir, file.Name()))
+		if err != nil {
+			return err
+		}
+		resourcePacks = append(resourcePacks, pack)
+	}
+	forceTextures = c.Proxy.ForceTextures
 
 	return nil
 }

@@ -12,7 +12,10 @@ import (
 
 func main() {
 	l, err := minecraft.ListenConfig{
-		StatusProvider: query.StatusProvider{},
+		AuthenticationDisabled: !config.Authentication(),
+		StatusProvider:         query.StatusProvider{},
+		ResourcePacks:          config.ResourcePacks(),
+		TexturePacksRequired:   config.ForceTexturePacks(),
 	}.Listen("raknet", ":19132")
 	if err != nil {
 		log.Fatalf("Unable to start listener: %v\n", err)

@@ -23,6 +23,7 @@ func handlePackets(s *Session) {
 				log.Println(err)
 				return
 			}
+			s.translatePacket(pk)
 
 			switch pk := pk.(type) {
 			case *packet.CommandRequest:
@@ -83,6 +84,8 @@ func handlePackets(s *Session) {
 					s.serverConn = conn
 					s.tempServerConn = nil
 
+					s.updateTranslatorData(conn.GameData())
+
 					// TODO: Set gamemode and stuff
 					continue
 				}
@@ -106,6 +109,7 @@ func handlePackets(s *Session) {
 				}
 				return
 			}
+			s.translatePacket(pk)
 
 			switch pk := pk.(type) {
 			case *packet.AvailableCommands:

@@ -13,14 +13,15 @@ import (
 )
 
 var (
-	emptyChunkData = make([]byte, 256)
+	emptyChunkData = make([]byte, 257)
 
 	sessions sync.Map
 )
 
 // Session stores the data for an active session on the proxy.
 type Session struct {
-	conn *minecraft.Conn
+	conn       *minecraft.Conn
+	translator *translator
 
 	server         *server.Server
 	serverConn     *minecraft.Conn
@@ -54,9 +55,10 @@ func New(conn *minecraft.Conn) error {
 	}
 
 	s := &Session{
-		conn:   conn,
-		server: srv,
-		uuid:   uuid.MustParse(conn.IdentityData().Identity),
+		conn:       conn,
+		translator: newTranslator(conn.GameData()),
+		server:     srv,
+		uuid:       uuid.MustParse(conn.IdentityData().Identity),
 	}
 	srvConn, err := s.dial(srv)
 	if err != nil {
@@ -171,11 +173,14 @@ func (s *Session) SetTransferring(v bool) {
 	s.transferring.Store(v)
 }
 
+// Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
-	if s.closed.Load() {
+	if !s.closed.CAS(false, true) {
 		return
 	}
-	s.closed.Store(true)
+
+	_ = s.conn.Close()
+	_ = s.serverConn.Close()
 
 	s.server.DecrementPlayerCount()
 	query.DecrementPlayerCount()

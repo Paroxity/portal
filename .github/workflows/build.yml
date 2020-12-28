@@ -1,0 +1,39 @@
+name: Build portal
+on: [push, pull_request]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[ci-build]')
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+      - name: Checkout code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Get dependencies
+        run: |
+          mkdir -p $GOPATH/bin
+          export PATH=$PATH:$GOPATH/bin
+      - name: Linux AMD64
+        run: GOOS=linux GOARCH=amd64 go build -o portal_linux_amd64 -ldflags="-s -w" -v .
+      - name: Linux ARM
+        run: GOOS=linux GOARCH=arm go build -o portal_linux_arm -ldflags="-s -w" -v .
+      - name: Windows AMD64
+        run: GOOS=windows GOARCH=amd64 go build -o portal_windows_amd64.exe -ldflags="-s -w" -v .
+      - name: Windows ARM
+        run: GOOS=windows GOARCH=arm go build -o portal_windows_arm.exe -ldflags="-s -w" -v .
+      - name: Darwin AMD64
+        run: GOOS=darwin GOARCH=amd64 go build -o portal_darwin_amd64 -ldflags="-s -w" -v .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Builds
+          path: |
+            portal_linux_amd64
+            portal_linux_arm
+            portal_windows_amd64.exe
+            portal_windows_arm.exe
+            portal_darwin_amd64

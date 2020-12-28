@@ -3,6 +3,7 @@ package session
 import (
 	"errors"
 	"github.com/google/uuid"
+	"github.com/paroxity/portal/query"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
@@ -28,6 +29,7 @@ type Session struct {
 	uuid uuid.UUID
 
 	transferring atomic.Bool
+	closed       atomic.Bool
 }
 
 // Lookup attempts to find a Session with the provided UUID.
@@ -67,6 +69,7 @@ func New(conn *minecraft.Conn) error {
 	handlePackets(s)
 	sessions.Store(s.UUID(), s)
 	srv.IncrementPlayerCount()
+	query.IncrementPlayerCount()
 	return nil
 }
 
@@ -169,5 +172,11 @@ func (s *Session) SetTransferring(v bool) {
 }
 
 func (s *Session) Close() {
+	if s.closed.Load() {
+		return
+	}
+	s.closed.Store(true)
+
 	s.server.DecrementPlayerCount()
+	query.DecrementPlayerCount()
 }

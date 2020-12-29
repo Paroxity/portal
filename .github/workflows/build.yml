@@ -1,10 +1,28 @@
 name: Build portal
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   build:
-    name: Build
+    name: Build ${{ matrix.file }}
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, '[ci-build]')
+    strategy:
+      matrix:
+        include:
+          - os: "linux"
+            arch: "amd64"
+            file: "portal_linux_amd64"
+          - os: "linux"
+            arch: "arm"
+            file: "portal_linux_arm"
+          - os: "windows"
+            arch: "amd64"
+            file: "portal_windows_amd64.exe"
+          - os: "windows"
+            arch: "arm"
+            file: "portal_windows_arm.exe"
+          - os: "darwin"
+            arch: "amd64"
+            file: "portal_darwin_amd64"
     steps:
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
@@ -17,23 +35,17 @@ jobs:
         run: |
           mkdir -p $GOPATH/bin
           export PATH=$PATH:$GOPATH/bin
-      - name: Linux AMD64
-        run: GOOS=linux GOARCH=amd64 go build -o portal_linux_amd64 -ldflags="-s -w" -v .
-      - name: Linux ARM
-        run: GOOS=linux GOARCH=arm go build -o portal_linux_arm -ldflags="-s -w" -v .
-      - name: Windows AMD64
-        run: GOOS=windows GOARCH=amd64 go build -o portal_windows_amd64.exe -ldflags="-s -w" -v .
-      - name: Windows ARM
-        run: GOOS=windows GOARCH=arm go build -o portal_windows_arm.exe -ldflags="-s -w" -v .
-      - name: Darwin AMD64
-        run: GOOS=darwin GOARCH=amd64 go build -o portal_darwin_amd64 -ldflags="-s -w" -v .
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Builds
-          path: |
-            portal_linux_amd64
-            portal_linux_arm
-            portal_windows_amd64.exe
-            portal_windows_arm.exe
-            portal_darwin_amd64
+      - name: Executables
+        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.file }} -ldflags="-s -w" -v .
+      - name: Upload Executables
+        env:
+          HOST: ${{ secrets.HOST }}
+          ADDRESS: ${{ secrets.ADDRESS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_rsa $HOST mkdir -p /home/paroxity/portal_builds/$GITHUB_SHA
+          scp -i ~/.ssh/id_rsa ${{ matrix.file }} $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/${{ matrix.file }}

@@ -2,7 +2,7 @@ name: Build portal
 on: [ push, pull_request ]
 jobs:
   build:
-    name: Build
+    name: Build ${{ matrix.file }}
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, '[ci-build]')
     strategy:

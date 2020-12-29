@@ -48,5 +48,5 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/id_rsa $HOST mkdir -p /home/paroxity/portal_builds/$GITHUB_SHA
-          ssh -i ~/.ssh/id_rsa $HOST echo "$GITHUB_SHA" > /home/paroxity/portal_builds/LATESTk
+          ssh -i ~/.ssh/id_rsa $HOST echo "$GITHUB_SHA" > /home/paroxity/portal_builds/LATEST
           scp -i ~/.ssh/id_rsa ${{ matrix.file }} $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/${{ matrix.file }}

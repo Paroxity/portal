@@ -1,5 +1,5 @@
 name: Build portal
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   build:
     name: Build
@@ -27,13 +27,19 @@ jobs:
         run: GOOS=windows GOARCH=arm go build -o portal_windows_arm.exe -ldflags="-s -w" -v .
       - name: Darwin AMD64
         run: GOOS=darwin GOARCH=amd64 go build -o portal_darwin_amd64 -ldflags="-s -w" -v .
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Builds
-          path: |
-            portal_linux_amd64
-            portal_linux_arm
-            portal_windows_amd64.exe
-            portal_windows_arm.exe
-            portal_darwin_amd64
+      - name: Upload Artifacts
+        env:
+          HOST: ${{ secrets.HOST }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh -i ~/.ssh/id_rsa $HOST mkdir $GITHUB_SHA
+          scp -i ~/.ssh/id_rsa portal_linux_amd64 $HOST:/home/paroxity/%GITHUB_SHA/portal_linux_amd64
+          scp -i ~/.ssh/id_rsa portal_linux_arm $HOST:/home/paroxity/%GITHUB_SHA/portal_linux_arm
+          scp -i ~/.ssh/id_rsa portal_windows_amd64.exe $HOST:/home/paroxity/%GITHUB_SHA/portal_windows_amd64.exe
+          scp -i ~/.ssh/id_rsa portal_windows_arm.exe $HOST:/home/paroxity/%GITHUB_SHA/portal_windows_arm.exe
+          scp -i ~/.ssh/id_rsa portal_darwin_amd64 $HOST:/home/paroxity/%GITHUB_SHA/portal_darwin_amd64

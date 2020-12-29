@@ -37,7 +37,12 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
       - name: Executables
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.file }} -ldflags="-s -w" -v .
-      - name: Upload Artifacts
+  upload:
+    name: Upload
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Upload Executables
         env:
           HOST: ${{ secrets.HOST }}
           ADDRESS: ${{ secrets.ADDRESS }}
@@ -47,7 +52,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_rsa $HOST mkdir ~/portal_builds/$GITHUB_SHA
+          ssh -i ~/.ssh/id_rsa $HOST mkdir /home/paroxity/portal_builds/$GITHUB_SHA
           scp -i ~/.ssh/id_rsa portal_linux_amd64 $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/portal_linux_amd64
           scp -i ~/.ssh/id_rsa portal_linux_arm $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/portal_linux_arm
           scp -i ~/.ssh/id_rsa portal_windows_amd64.exe $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/portal_windows_amd64.exe

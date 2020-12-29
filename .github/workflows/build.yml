@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh/
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 700 ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/id_rsa $HOST mkdir $GITHUB_SHA
           scp -i ~/.ssh/id_rsa portal_linux_amd64 $HOST:/home/paroxity/%GITHUB_SHA/portal_linux_amd64

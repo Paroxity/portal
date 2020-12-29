@@ -30,13 +30,13 @@ jobs:
       - name: Upload Artifacts
         env:
           HOST: ${{ secrets.HOST }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          ADDRESS: ${{ secrets.ADDRESS }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          chmod 700 ~/.ssh/id_rsa
+          ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/id_rsa $HOST mkdir $GITHUB_SHA
           scp -i ~/.ssh/id_rsa portal_linux_amd64 $HOST:/home/paroxity/%GITHUB_SHA/portal_linux_amd64
           scp -i ~/.ssh/id_rsa portal_linux_arm $HOST:/home/paroxity/%GITHUB_SHA/portal_linux_arm

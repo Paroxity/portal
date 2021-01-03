@@ -1,43 +1,31 @@
-name: Build portal
-on: [ push, pull_request ]
+name: Build Portal
+on: [ push ]
 jobs:
   build:
-    name: Build ${{ matrix.file }}
+    name: Build ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, '[ci-build]')
     strategy:
       matrix:
-        include:
-          - os: "linux"
-            arch: "amd64"
-            file: "portal_linux_amd64"
-          - os: "linux"
-            arch: "arm"
-            file: "portal_linux_arm"
-          - os: "windows"
-            arch: "amd64"
-            file: "portal_windows_amd64.exe"
-          - os: "windows"
-            arch: "arm"
-            file: "portal_windows_arm.exe"
+        os: [ "linux", "darwin", "windows" ]
+        arch: [ "amd64", "arm" ]
+        exclude:
           - os: "darwin"
-            arch: "amd64"
-            file: "portal_darwin_amd64"
+            arch: "arm"
     steps:
-      - name: Set up Go 1.13
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Setup Golang
         uses: actions/setup-go@v1
         with:
           go-version: 1.13
-        id: go
-      - name: Checkout code into the Go module directory
-        uses: actions/checkout@v2
       - name: Get dependencies
         run: |
           mkdir -p $GOPATH/bin
           export PATH=$PATH:$GOPATH/bin
-      - name: Executables
-        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ${{ matrix.file }} -ldflags="-s -w" -v .
-      - name: Upload Executables
+      - name: Build Executable
+        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} -ldflags="-s -w" -v .
+      - name: Upload Executable
         env:
           HOST: ${{ secrets.HOST }}
           ADDRESS: ${{ secrets.ADDRESS }}
@@ -48,4 +36,4 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/id_rsa $HOST mkdir -p /home/paroxity/portal_builds/$GITHUB_SHA
-          scp -i ~/.ssh/id_rsa ${{ matrix.file }} $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/${{ matrix.file }}
+          scp -i ~/.ssh/id_rsa portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}

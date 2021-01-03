@@ -12,6 +12,9 @@ var (
 	authentication bool
 	resourcePacks  []*resource.Pack
 	forceTextures  bool
+
+	socketAddress string
+	socketSecret  string
 )
 
 func MaxPlayers() int {
@@ -40,4 +43,12 @@ func ResourcePacks() []*resource.Pack {
 
 func ForceTexturePacks() bool {
 	return forceTextures
+}
+
+func SocketAddress() string {
+	return socketAddress
+}
+
+func SocketSecret() string {
+	return socketSecret
 }

@@ -23,17 +23,14 @@ type config struct {
 	Proxy struct {
 		Groups         []string
 		DefaultGroup   string
-		Servers        []ServerInfo
 		Authentication bool
 		ResourcesDir   string
 		ForceTextures  bool
 	}
-}
-
-type ServerInfo struct {
-	Name    string
-	Group   string
-	Address string
+	Socket struct {
+		BindAddress string
+		Secret      string
+	}
 }
 
 func init() {
@@ -47,12 +44,8 @@ func Load() error {
 	c.Query.MOTD = "Portal"
 	c.Proxy.Groups = []string{"Hub"}
 	c.Proxy.DefaultGroup = "Hub"
-	c.Proxy.Servers = append(c.Proxy.Servers, ServerInfo{
-		Name:    "Hub1",
-		Group:   "Hub",
-		Address: "127.0.0.1:19133",
-	})
 	c.Proxy.Authentication = true
+	c.Socket.BindAddress = "127.0.0.1:19131"
 
 	if _, err := os.Stat("config.yml"); os.IsNotExist(err) {
 		data, err := yaml.Marshal(c)
@@ -87,12 +80,6 @@ func Load() error {
 	}
 	server.SetDefaultGroup(g)
 
-	for _, info := range c.Proxy.Servers {
-		if _, err := server.New(info.Name, info.Group, info.Address); err != nil {
-			panic(err)
-		}
-	}
-
 	authentication = c.Proxy.Authentication
 	files, err := ioutil.ReadDir(c.Proxy.ResourcesDir)
 	if err != nil && !os.IsNotExist(err) {
@@ -106,6 +93,9 @@ func Load() error {
 		resourcePacks = append(resourcePacks, pack)
 	}
 	forceTextures = c.Proxy.ForceTextures
+
+	socketAddress = c.Socket.BindAddress
+	socketSecret = c.Socket.Secret
 
 	return nil
 }

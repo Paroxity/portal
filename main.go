@@ -4,6 +4,7 @@ import (
 	"github.com/paroxity/portal/config"
 	"github.com/paroxity/portal/query"
 	"github.com/paroxity/portal/session"
+	"github.com/paroxity/portal/socket"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/text"
 	"log"
@@ -20,6 +21,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to start listener: %v\n", err)
 	}
+
+	go func() {
+		if err := socket.Listen(); err != nil {
+			panic(err)
+		}
+	}()
 
 	for {
 		conn, err := l.Accept()

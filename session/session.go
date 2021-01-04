@@ -121,10 +121,9 @@ func (s *Session) UUID() uuid.UUID {
 }
 
 func (s *Session) Transfer(srv *server.Server) error {
-	if s.Transferring() {
+	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
 	}
-	s.SetTransferring(true)
 
 	conn, err := s.dial(srv)
 	if err != nil {

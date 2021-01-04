@@ -43,7 +43,7 @@ func main() {
 func handleConnection(l *minecraft.Listener, conn *minecraft.Conn) {
 	var whitelisted bool
 	for _, p := range config.Whitelisted() {
-		if strings.ToLower(conn.IdentityData().DisplayName) == strings.ToLower(p) {
+		if strings.EqualFold(conn.IdentityData().DisplayName, p) {
 			whitelisted = true
 			break
 		}

@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.1.4
 	github.com/klauspost/compress v1.11.4 // indirect
 	github.com/sandertv/go-raknet v1.10.0 // indirect
 	github.com/sandertv/gophertunnel v1.10.3

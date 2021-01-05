@@ -67,9 +67,7 @@ func handlePackets(s *Session) {
 					continue
 				}
 			case *packet.PlayerAction:
-				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.Transferring() {
-					s.SetTransferring(false)
-
+				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
 					old := s.serverConn
 					conn := s.tempServerConn
 

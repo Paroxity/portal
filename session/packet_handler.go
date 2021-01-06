@@ -87,6 +87,10 @@ func handlePackets(s *Session) {
 					// TODO: Set gamemode and stuff
 					continue
 				}
+			case *packet.Text:
+				pk.XUID = ""
+			case *packet.BookEdit:
+				pk.XUID = ""
 			}
 
 			_ = s.ServerConn().WritePacket(pk)

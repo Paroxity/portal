@@ -6,7 +6,7 @@ import (
 	portalpacket "github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"net"
-	"regexp"
+	"strings"
 )
 
 var (
@@ -49,8 +49,7 @@ func handleClient(c *Client) {
 	for {
 		pk, err := c.ReadPacket()
 		if err != nil {
-			r := regexp.MustCompile("EOF|closed")
-			if r.MatchString(err.Error()) {
+			if containsAny(err.Error(), "EOF", "closed") {
 				return
 			}
 			fmt.Println(err)
@@ -66,4 +65,14 @@ func handleClient(c *Client) {
 			fmt.Printf("Unhandled packet %T\n", pk)
 		}
 	}
+}
+
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+
+	return false
 }

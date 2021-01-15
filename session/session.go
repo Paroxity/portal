@@ -44,22 +44,15 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 
 // New creates a new Session with the provided connection and target server.
 func New(conn *minecraft.Conn) error {
-	var srv *server.Server
-	for _, s := range server.DefaultGroup().Servers() {
-		if srv == nil || srv.PlayerCount() > s.PlayerCount() {
-			srv = s
-		}
-	}
-	if srv == nil {
-		return errors.New("no server in default group")
-	}
-
 	s := &Session{
 		conn:       conn,
 		translator: newTranslator(conn.GameData()),
-		server:     srv,
 		uuid:       uuid.MustParse(conn.IdentityData().Identity),
 	}
+
+	srv := LoadBalancer()(s)
+	s.server = srv
+
 	srvConn, err := s.dial(srv)
 	if err != nil {
 		return err

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	loadBalancers map[string]func(session *Session) *server.Server
+	loadBalancers = make(map[string]func(session *Session) *server.Server)
 	loadBalancer  string
 )
 

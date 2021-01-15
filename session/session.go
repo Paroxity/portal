@@ -33,6 +33,16 @@ type Session struct {
 	closed       atomic.Bool
 }
 
+// All returns all of the connected sessions on the proxy.
+func All() []*Session {
+	var s []*Session
+	sessions.Range(func(_, v interface{}) bool {
+		s = append(s, v.(*Session))
+		return true
+	})
+	return s
+}
+
 // Lookup attempts to find a Session with the provided UUID.
 func Lookup(v uuid.UUID) (*Session, bool) {
 	s, ok := sessions.Load(v)
@@ -101,6 +111,11 @@ func (s *Session) login() error {
 // Conn returns the active connection for the session.
 func (s *Session) Conn() *minecraft.Conn {
 	return s.conn
+}
+
+// Server returns the server the session is currently connected to.
+func (s *Session) Server() *server.Server {
+	return s.server
 }
 
 // ServerConn returns the connection for the session's current server.

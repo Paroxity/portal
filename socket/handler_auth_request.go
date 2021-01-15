@@ -10,8 +10,10 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
+// AuthRequestHandler is responsible for handling the AuthRequest packet sent by servers.
 type AuthRequestHandler struct{}
 
+// Handle ...
 func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 	pk := p.(*portalpacket.AuthRequest)
 

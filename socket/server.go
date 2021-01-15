@@ -16,11 +16,19 @@ var (
 
 func init() {
 	handlers = map[uint32]packetHandler{
-		portalpacket.IDAuthRequest: &AuthRequestHandler{},
+		portalpacket.IDAuthRequest:     &AuthRequestHandler{},
+		portalpacket.IDTransferRequest: &TransferRequestHandler{},
 	}
 
-	packet.Register(portalpacket.IDAuthRequest, func() packet.Packet { return &portalpacket.AuthRequest{} })
-	packet.Register(portalpacket.IDAuthResponse, func() packet.Packet { return &portalpacket.AuthResponse{} })
+	packets := map[uint32]func() packet.Packet{
+		portalpacket.IDAuthRequest:      func() packet.Packet { return &portalpacket.AuthRequest{} },
+		portalpacket.IDAuthResponse:     func() packet.Packet { return &portalpacket.AuthResponse{} },
+		portalpacket.IDTransferRequest:  func() packet.Packet { return &portalpacket.TransferRequest{} },
+		portalpacket.IDTransferResponse: func() packet.Packet { return &portalpacket.TransferResponse{} },
+	}
+	for id, pk := range packets {
+		packet.Register(id, pk)
+	}
 	pool = packet.NewPool()
 }
 

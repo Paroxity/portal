@@ -30,10 +30,6 @@ func (*TransferRequestHandler) Handle(p packet.Packet, c *Client) error {
 			Reason: fmt.Sprintf("Server %s does not exist in group %s", pk.Server, pk.Group),
 		})
 	}
-	if srv == nil {
-		// TODO: Send response saying no servers in group
-		return nil
-	}
 
 	for _, s := range session.All() {
 		if s.ServerConn().GameData().EntityRuntimeID == pk.PlayerRuntimeID {
@@ -45,8 +41,10 @@ func (*TransferRequestHandler) Handle(p packet.Packet, c *Client) error {
 			}
 
 			if err := s.Transfer(srv); err != nil {
-				// TODO: Send response saying error
-				return nil
+				return c.WritePacket(&portalpacket.TransferResponse{
+					Status: portalpacket.TransferResponseError,
+					Reason: err.Error(),
+				})
 			}
 			return c.WritePacket(&portalpacket.TransferResponse{
 				Status: portalpacket.TransferResponseSuccess,

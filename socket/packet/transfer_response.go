@@ -8,6 +8,7 @@ const (
 	TransferResponseServerNotFound
 	TransferResponseAlreadyOnServer
 	TransferResponsePlayerNotFound
+	TransferResponseError
 )
 
 // TransferResponse is sent by the proxy in response to a transfer request.

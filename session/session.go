@@ -23,6 +23,9 @@ type Session struct {
 	conn       *minecraft.Conn
 	translator *translator
 
+	clientPacketFunc func(pk packet.Packet) bool
+	serverPacketFunc func(pk packet.Packet) bool
+
 	server         *server.Server
 	serverConn     *minecraft.Conn
 	tempServerConn *minecraft.Conn
@@ -53,11 +56,15 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 }
 
 // New creates a new Session with the provided connection and target server.
-func New(conn *minecraft.Conn) error {
+func New(conn *minecraft.Conn, clientPacketFunc, serverPacketFunc func(pk packet.Packet) bool) error {
 	s := &Session{
 		conn:       conn,
 		translator: newTranslator(conn.GameData()),
-		uuid:       uuid.MustParse(conn.IdentityData().Identity),
+
+		clientPacketFunc: clientPacketFunc,
+		serverPacketFunc: serverPacketFunc,
+
+		uuid: uuid.MustParse(conn.IdentityData().Identity),
 	}
 
 	srv := LoadBalancer()(s)

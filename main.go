@@ -54,7 +54,7 @@ func handleConnection(l *minecraft.Listener, conn *minecraft.Conn) {
 		return
 	}
 
-	if err := session.New(conn); err != nil {
+	if err := session.New(conn, nil, nil); err != nil {
 		log.Printf("Unable to create session, %v\n", err)
 		_ = l.Disconnect(conn, text.Colourf("<red>%v</red>", err))
 		return

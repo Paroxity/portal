@@ -9,7 +9,21 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"net"
+	"sync"
 )
+
+var (
+	clientsMu sync.RWMutex
+	clients   map[string]*Client
+)
+
+func LookUp(name string) (*Client, bool) {
+	clientsMu.RLock()
+	c, ok := clients[name]
+	clientsMu.RUnlock()
+
+	return c, ok
+}
 
 // Client represents a client connected over the TCP socket system.
 type Client struct {

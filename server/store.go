@@ -8,7 +8,7 @@ import (
 var (
 	defaultGroup *Group
 	groups       = make(map[string]*Group)
-	groupsMu     sync.Mutex
+	groupsMu     sync.RWMutex
 )
 
 func AddGroup(g *Group) {
@@ -24,18 +24,26 @@ func RemoveGroup(name string) {
 }
 
 func DefaultGroup() *Group {
+	groupsMu.RLock()
+	defer groupsMu.RUnlock()
 	return defaultGroup
 }
 
 func SetDefaultGroup(g *Group) {
+	groupsMu.Lock()
 	defaultGroup = g
+	groupsMu.Unlock()
 }
 
 func GroupFromName(name string) (*Group, bool) {
+	groupsMu.RLock()
 	g, ok := groups[strings.ToLower(name)]
+	groupsMu.RUnlock()
 	return g, ok
 }
 
 func Groups() map[string]*Group {
+	groupsMu.RLock()
+	defer groupsMu.RUnlock()
 	return groups
 }

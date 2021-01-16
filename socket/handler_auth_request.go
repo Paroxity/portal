@@ -52,6 +52,10 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		c.clientType = pk.Type
 		c.extraData["address"] = address
 		c.extraData["group"] = g.Name()
+
+		clientsMu.Lock()
+		clients[pk.Name] = c
+		clientsMu.Unlock()
 	default:
 		return c.WritePacket(&portalpacket.AuthResponse{
 			Status: portalpacket.AuthResponseUnknownType,

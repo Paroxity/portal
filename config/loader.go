@@ -1,10 +1,10 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/resource"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
 	"os"
@@ -51,20 +51,20 @@ func Load() error {
 	c.Proxy.Authentication = true
 	c.Socket.BindAddress = "127.0.0.1:19131"
 
-	if _, err := os.Stat("config.yml"); os.IsNotExist(err) {
-		data, err := yaml.Marshal(c)
+	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
+		data, err := json.MarshalIndent(c, "", "    ")
 		if err != nil {
 			return fmt.Errorf("failed encoding default config: %v", err)
 		}
-		if err := ioutil.WriteFile("config.yml", data, 0644); err != nil {
+		if err := ioutil.WriteFile("config.json", data, 0644); err != nil {
 			return fmt.Errorf("failed creating config: %v", err)
 		}
 	} else {
-		data, err := ioutil.ReadFile("config.yml")
+		data, err := ioutil.ReadFile("config.json")
 		if err != nil {
 			return fmt.Errorf("error reading config: %v", err)
 		}
-		if err := yaml.Unmarshal(data, &c); err != nil {
+		if err := json.Unmarshal(data, &c); err != nil {
 			return fmt.Errorf("error decoding config: %v", err)
 		}
 	}
@@ -79,10 +79,6 @@ func Load() error {
 	}
 
 	for name, group := range c.Proxy.Groups {
-		if len(group) == 0 {
-			return fmt.Errorf("group %s has no servers", group)
-		}
-
 		g := server.NewGroup(name)
 		for name, address := range group {
 			g.AddServer(server.New(name, address))

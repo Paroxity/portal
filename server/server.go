@@ -1,30 +1,25 @@
 package server
 
 import (
-	"fmt"
 	"go.uber.org/atomic"
 )
 
 type Server struct {
 	name    string
-	group   string
 	address string
+
+	connection Client
 
 	playerCount atomic.Int64
 }
 
-func New(name, group, address string) (*Server, error) {
+func New(name, address string) *Server {
 	s := &Server{
 		name:    name,
-		group:   group,
 		address: address,
 	}
-	g, ok := GroupFromName(group)
-	if !ok {
-		return nil, fmt.Errorf("group %s not found", group)
-	}
-	g.AddServer(s)
-	return s, nil
+
+	return s
 }
 
 func (s *Server) Name() string {
@@ -33,6 +28,18 @@ func (s *Server) Name() string {
 
 func (s *Server) Address() string {
 	return s.address
+}
+
+func (s *Server) Connected() bool {
+	return s.connection != nil
+}
+
+func (s *Server) Conn() Client {
+	return s.connection
+}
+
+func (s *Server) setConn(c Client) {
+	s.connection = c
 }
 
 func (s *Server) IncrementPlayerCount() {

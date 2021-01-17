@@ -41,16 +41,21 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 			})
 		}
 
-		c.name = pk.Name
-		c.clientType = pk.Type
-		c.extraData["address"] = address
-		c.extraData["group"] = g.Name()
-
 		s, ok := g.Server(pk.Name)
 		if !ok {
 			s = server.New(pk.Name, address)
 			g.AddServer(s)
+		} else if s.Connected() {
+			return c.WritePacket(&portalpacket.AuthResponse{
+				Status: portalpacket.AuthResponseInvalidData,
+				Reason: "A connection already exists for this server",
+			})
 		}
+
+		c.name = pk.Name
+		c.clientType = pk.Type
+		c.extraData["address"] = address
+		c.extraData["group"] = g.Name()
 
 		server_setConn(s, c)
 	default:

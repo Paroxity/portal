@@ -43,8 +43,7 @@ func (c *Client) Close() error {
 
 	switch c.clientType {
 	case portalpacket.ClientTypeServer:
-		name, ok := c.extraData["group"]
-		if ok {
+		if name, ok := c.extraData["group"]; ok {
 			g, _ := server.GroupFromName(name.(string))
 			s, ok := g.Server(c.name)
 			if !ok {

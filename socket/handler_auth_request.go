@@ -41,18 +41,16 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 			})
 		}
 
-		s, ok := g.Server(pk.Name)
-		if ok {
-			return c.WritePacket(&portalpacket.AuthResponse{
-				Status: portalpacket.AuthResponseInvalidData,
-				Reason: "A server with the same name is already authenticated",
-			})
-		}
-
 		c.name = pk.Name
 		c.clientType = pk.Type
 		c.extraData["address"] = address
 		c.extraData["group"] = g.Name()
+
+		s, ok := g.Server(pk.Name)
+		if !ok {
+			s = server.New(pk.Name, address)
+			g.AddServer(s)
+		}
 
 		server_setConn(s, c)
 	default:

@@ -8,6 +8,7 @@ import (
 	portalpacket "github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	_ "unsafe"
 )
 
 // AuthRequestHandler is responsible for handling the AuthRequest packet sent by servers.
@@ -40,22 +41,23 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 			})
 		}
 
-		if _, ok := g.Server(pk.Name); ok {
+		s, ok := g.Server(pk.Name)
+		if !ok {
+			s = server.New(pk.Name, address)
+			g.AddServer(s)
+		} else if s.Connected() {
 			return c.WritePacket(&portalpacket.AuthResponse{
 				Status: portalpacket.AuthResponseInvalidData,
-				Reason: "A server with the same name is already authenticated",
+				Reason: "A connection already exists for this server",
 			})
 		}
 
-		_, _ = server.New(pk.Name, group, address)
 		c.name = pk.Name
 		c.clientType = pk.Type
 		c.extraData["address"] = address
 		c.extraData["group"] = g.Name()
 
-		clientsMu.Lock()
-		clients[pk.Name] = c
-		clientsMu.Unlock()
+		server_setConn(s, c)
 	default:
 		return c.WritePacket(&portalpacket.AuthResponse{
 			Status: portalpacket.AuthResponseUnknownType,
@@ -68,3 +70,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		Reason: "Authentication was successful",
 	})
 }
+
+//go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn
+//noinspection ALL
+func server_setConn(s *server.Server, c server.Client)

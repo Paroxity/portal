@@ -32,8 +32,7 @@ func SetLoadBalancer(name string) error {
 }
 
 func init() {
-	RegisterLoadBalancer("split", func(session *Session) *server.Server {
-		var srv *server.Server
+	RegisterLoadBalancer("split", func(session *Session) (srv *server.Server) {
 		for _, s := range server.DefaultGroup().Servers() {
 			if srv == nil || srv.PlayerCount() > s.PlayerCount() {
 				srv = s

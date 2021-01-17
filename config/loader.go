@@ -21,7 +21,7 @@ type config struct {
 		Players []string
 	}
 	Proxy struct {
-		Groups         []string
+		Groups         map[string]map[string]string
 		DefaultGroup   string
 		Authentication bool
 		ResourcesDir   string
@@ -42,7 +42,11 @@ func init() {
 func Load() error {
 	c := config{}
 	c.Query.MOTD = "Portal"
-	c.Proxy.Groups = []string{"Hub"}
+	c.Proxy.Groups = map[string]map[string]string{
+		"Hub": {
+			"Hub1": "127.0.0.1:19133",
+		},
+	}
 	c.Proxy.DefaultGroup = "Hub"
 	c.Proxy.Authentication = true
 	c.Socket.BindAddress = "127.0.0.1:19131"
@@ -70,13 +74,26 @@ func Load() error {
 	whitelist = c.Whitelist.Enabled
 	whitelisted = c.Whitelist.Players
 
-	for _, name := range c.Proxy.Groups {
-		server.AddGroup(server.NewGroup(name))
+	if len(c.Proxy.Groups) == 0 {
+		return fmt.Errorf("groups are empty")
+	}
+
+	for name, group := range c.Proxy.Groups {
+		if len(group) == 0 {
+			return fmt.Errorf("group %s has no servers", group)
+		}
+
+		g := server.NewGroup(name)
+		for name, address := range group {
+			g.AddServer(server.New(name, address))
+		}
+
+		server.AddGroup(g)
 	}
 
 	g, ok := server.GroupFromName(c.Proxy.DefaultGroup)
 	if !ok {
-		panic(fmt.Sprintf("default group %s not found", c.Proxy.DefaultGroup))
+		return fmt.Errorf("default group %s not found", c.Proxy.DefaultGroup)
 	}
 	server.SetDefaultGroup(g)
 

@@ -3,14 +3,15 @@ package session
 import (
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"go.uber.org/atomic"
 )
 
 type translator struct {
 	originalRuntimeID uint64
 	originalUniqueID  int64
 
-	currentRuntimeID uint64
-	currentUniqueID  int64
+	currentRuntimeID atomic.Uint64
+	currentUniqueID  atomic.Int64
 }
 
 func newTranslator(data minecraft.GameData) *translator {
@@ -18,14 +19,14 @@ func newTranslator(data minecraft.GameData) *translator {
 		originalRuntimeID: data.EntityRuntimeID,
 		originalUniqueID:  data.EntityUniqueID,
 
-		currentRuntimeID: data.EntityRuntimeID,
-		currentUniqueID:  data.EntityUniqueID,
+		currentRuntimeID: *atomic.NewUint64(data.EntityRuntimeID),
+		currentUniqueID:  *atomic.NewInt64(data.EntityUniqueID),
 	}
 }
 
 func (s *Session) updateTranslatorData(data minecraft.GameData) {
-	s.translator.currentRuntimeID = data.EntityRuntimeID
-	s.translator.currentUniqueID = data.EntityUniqueID
+	s.translator.currentRuntimeID.Store(data.EntityRuntimeID)
+	s.translator.currentUniqueID.Store(data.EntityUniqueID)
 }
 
 func (s *Session) translatePacket(pk packet.Packet) {
@@ -148,7 +149,7 @@ func (s *Session) translatePacket(pk packet.Packet) {
 
 func (s *Session) translateRuntimeID(id uint64) uint64 {
 	original := s.translator.originalRuntimeID
-	current := s.translator.currentRuntimeID
+	current := s.translator.currentRuntimeID.Load()
 
 	if original == id {
 		return current
@@ -160,7 +161,7 @@ func (s *Session) translateRuntimeID(id uint64) uint64 {
 
 func (s *Session) translateUniqueID(id int64) int64 {
 	original := s.translator.originalUniqueID
-	current := s.translator.currentUniqueID
+	current := s.translator.currentUniqueID.Load()
 
 	if original == id {
 		return current

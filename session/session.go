@@ -23,9 +23,9 @@ type Session struct {
 	conn       *minecraft.Conn
 	translator *translator
 
-	clientPacketFunc func(pk packet.Packet) bool
-	serverPacketFunc func(pk packet.Packet) bool
+	clientPacketFunc, serverPacketFunc func(s *Session, pk packet.Packet) bool
 
+	serverMu       sync.RWMutex
 	server         *server.Server
 	serverConn     *minecraft.Conn
 	tempServerConn *minecraft.Conn
@@ -56,7 +56,7 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 }
 
 // New creates a new Session with the provided connection and target server.
-func New(conn *minecraft.Conn, clientPacketFunc, serverPacketFunc func(pk packet.Packet) bool) error {
+func New(conn *minecraft.Conn, clientPacketFunc, serverPacketFunc func(s *Session, pk packet.Packet) bool) error {
 	s := &Session{
 		conn:       conn,
 		translator: newTranslator(conn.GameData()),
@@ -100,13 +100,13 @@ func (s *Session) login() error {
 	g.Add(2)
 	var loginErr error = nil
 	go func() {
-		if err := s.conn.StartGameTimeout(s.serverConn.GameData(), time.Minute); err != nil {
+		if err := s.conn.StartGameTimeout(s.ServerConn().GameData(), time.Minute); err != nil {
 			loginErr = err
 		}
 		g.Done()
 	}()
 	go func() {
-		if err := s.serverConn.DoSpawnTimeout(time.Minute); err != nil {
+		if err := s.ServerConn().DoSpawnTimeout(time.Minute); err != nil {
 			loginErr = err
 		}
 		g.Done()
@@ -122,11 +122,15 @@ func (s *Session) Conn() *minecraft.Conn {
 
 // Server returns the server the session is currently connected to.
 func (s *Session) Server() *server.Server {
+	s.serverMu.RLock()
+	defer s.serverMu.RUnlock()
 	return s.server
 }
 
 // ServerConn returns the connection for the session's current server.
 func (s *Session) ServerConn() *minecraft.Conn {
+	s.serverMu.RLock()
+	defer s.serverMu.RUnlock()
 	return s.serverConn
 }
 
@@ -147,7 +151,10 @@ func (s *Session) Transfer(srv *server.Server) error {
 	if err := conn.DoSpawnTimeout(time.Minute); err != nil {
 		return err
 	}
+
+	s.serverMu.Lock()
 	s.tempServerConn = conn
+	s.serverMu.Unlock()
 
 	pos := s.conn.GameData().PlayerPosition
 	_ = s.conn.WritePacket(&packet.ChangeDimension{
@@ -170,9 +177,11 @@ func (s *Session) Transfer(srv *server.Server) error {
 		}
 	}
 
+	s.serverMu.Lock()
 	s.server.DecrementPlayerCount()
 	s.server = srv
 	s.server.IncrementPlayerCount()
+	s.serverMu.Unlock()
 
 	return nil
 }
@@ -194,7 +203,7 @@ func (s *Session) Close() {
 	}
 
 	_ = s.conn.Close()
-	_ = s.serverConn.Close()
+	_ = s.ServerConn().Close()
 
 	s.server.DecrementPlayerCount()
 	query.DecrementPlayerCount()

@@ -24,9 +24,10 @@ func handlePackets(s *Session) {
 			case *packet.PlayerAction:
 				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
 					s.serverMu.Lock()
+					gameData := s.tempServerConn.GameData()
 					_ = s.conn.WritePacket(&packet.ChangeDimension{
 						Dimension: packet.DimensionOverworld,
-						Position:  s.tempServerConn.GameData().PlayerPosition,
+						Position:  gameData.PlayerPosition,
 					})
 
 					_ = s.serverConn.Close()
@@ -35,7 +36,7 @@ func handlePackets(s *Session) {
 					s.tempServerConn = nil
 					s.serverMu.Unlock()
 
-					s.updateTranslatorData(s.ServerConn().GameData())
+					s.updateTranslatorData(gameData)
 
 					// TODO: Set gamemode and stuff
 					continue

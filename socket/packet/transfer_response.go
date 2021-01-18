@@ -1,6 +1,9 @@
 package packet
 
-import "github.com/sandertv/gophertunnel/minecraft/protocol"
+import (
+	"github.com/google/uuid"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
+)
 
 const (
 	TransferResponseSuccess = iota
@@ -13,12 +16,12 @@ const (
 
 // TransferResponse is sent by the proxy in response to a transfer request.
 type TransferResponse struct {
-	// PlayerRuntimeID is the entity runtime ID of the player being transferred.
-	PlayerRuntimeID uint64
+	// PlayerUUID is the UUID of the player being transferred.
+	PlayerUUID uuid.UUID
 	// Status is the response status from the transfer. The possible values for this can be found above.
 	Status byte
-	// Reason is the reason behind the Status provided.
-	Reason string
+	// Error is the error message when the Status field is TransferResponseError.
+	Error string
 }
 
 // ID ...
@@ -28,14 +31,18 @@ func (*TransferResponse) ID() uint32 {
 
 // Marshal ...
 func (pk *TransferResponse) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.PlayerRuntimeID)
+	w.UUID(&pk.PlayerUUID)
 	w.Uint8(&pk.Status)
-	w.String(&pk.Reason)
+	if pk.Status == TransferResponseError {
+		w.String(&pk.Error)
+	}
 }
 
 // Unmarshal ...
 func (pk *TransferResponse) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.PlayerRuntimeID)
+	r.UUID(&pk.PlayerUUID)
 	r.Uint8(&pk.Status)
-	r.String(&pk.Reason)
+	if pk.Status == TransferResponseError {
+		r.String(&pk.Error)
+	}
 }

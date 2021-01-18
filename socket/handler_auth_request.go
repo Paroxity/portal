@@ -2,7 +2,6 @@ package socket
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/paroxity/portal/config"
 	"github.com/paroxity/portal/server"
 	portalpacket "github.com/paroxity/portal/socket/packet"
@@ -21,7 +20,6 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 	if pk.Secret != config.SocketSecret() {
 		return c.WritePacket(&portalpacket.AuthResponse{
 			Status: portalpacket.AuthResponseIncorrectSecret,
-			Reason: "The provided secret does not match the configured secret",
 		})
 	}
 
@@ -37,7 +35,6 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		if !ok {
 			return c.WritePacket(&portalpacket.AuthResponse{
 				Status: portalpacket.AuthResponseInvalidData,
-				Reason: fmt.Sprintf("Group %s not found", group),
 			})
 		}
 
@@ -48,7 +45,6 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		} else if s.Connected() {
 			return c.WritePacket(&portalpacket.AuthResponse{
 				Status: portalpacket.AuthResponseInvalidData,
-				Reason: "A connection already exists for this server",
 			})
 		}
 
@@ -61,13 +57,11 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 	default:
 		return c.WritePacket(&portalpacket.AuthResponse{
 			Status: portalpacket.AuthResponseUnknownType,
-			Reason: "Unknown client type provided",
 		})
 	}
 
 	return c.WritePacket(&portalpacket.AuthResponse{
 		Status: portalpacket.AuthResponseSuccess,
-		Reason: "Authentication was successful",
 	})
 }
 

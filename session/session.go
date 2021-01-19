@@ -34,6 +34,9 @@ type Session struct {
 	serverConn     *minecraft.Conn
 	tempServerConn *minecraft.Conn
 
+	entityMu sync.Mutex
+	entities map[int64]struct{}
+
 	uuid uuid.UUID
 
 	transferring atomic.Bool
@@ -64,6 +67,8 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	s := &Session{
 		translator: newTranslator(conn.GameData()),
 		conn:       conn,
+
+		entities: make(map[int64]struct{}),
 
 		h:    NopHandler{},
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
@@ -174,7 +179,16 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 			Position:  pos,
 		})
 
-		// TODO: Clear inventory, scoreboard & entities
+		// TODO: Clear inventory & scoreboard
+
+		s.entityMu.Lock()
+		e := s.entities
+		s.entities = map[int64]struct{}{}
+		s.entityMu.Unlock()
+
+		for id := range e {
+			_ = s.conn.WritePacket(&packet.RemoveActor{EntityUniqueID: id})
+		}
 
 		chunkX := int32(pos.X()) >> 4
 		chunkZ := int32(pos.Z()) >> 4
@@ -220,11 +234,27 @@ func (s *Session) handler() Handler {
 	return handler
 }
 
+func (s *Session) addLoadedEntity(eid int64) {
+	s.entityMu.Lock()
+	s.entities[eid] = struct{}{}
+	s.entityMu.Unlock()
+}
+
+func (s *Session) removeLoadedEntity(eid int64) {
+	s.entityMu.Lock()
+	delete(s.entities, eid)
+	s.entityMu.Unlock()
+}
+
 // Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
 	s.once.Do(func() {
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
+
+		s.entityMu.Lock()
+		s.entities = map[int64]struct{}{}
+		s.entityMu.Unlock()
 
 		s.server.DecrementPlayerCount()
 		query.DecrementPlayerCount()

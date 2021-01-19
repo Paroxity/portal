@@ -20,6 +20,14 @@ func handlePackets(s *Session) {
 			s.translatePacket(pk)
 
 			switch pk := pk.(type) {
+			case *packet.AddActor:
+				s.addLoadedEntity(pk.EntityUniqueID)
+			case *packet.AddItemActor:
+				s.addLoadedEntity(pk.EntityUniqueID)
+			case *packet.AddPainting:
+				s.addLoadedEntity(pk.EntityUniqueID)
+			case *packet.AddPlayer:
+				s.addLoadedEntity(pk.EntityUniqueID)
 			case *packet.PlayerAction:
 				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
 					s.serverMu.Lock()
@@ -68,6 +76,11 @@ func handlePackets(s *Session) {
 				return
 			}
 			s.translatePacket(pk)
+
+			switch pk := pk.(type) {
+			case *packet.RemoveActor:
+				s.removeLoadedEntity(pk.EntityUniqueID)
+			}
 
 			ctx := event.C()
 			s.handler().HandleClientBoundPacket(ctx, pk)

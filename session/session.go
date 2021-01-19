@@ -3,6 +3,7 @@ package session
 import (
 	"errors"
 	"github.com/google/uuid"
+	"github.com/paroxity/portal/event"
 	"github.com/paroxity/portal/query"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
@@ -20,10 +21,13 @@ var (
 
 // Session stores the data for an active session on the proxy.
 type Session struct {
-	conn       *minecraft.Conn
-	translator *translator
+	*translator
 
-	clientPacketFunc, serverPacketFunc func(s *Session, pk packet.Packet) bool
+	conn *minecraft.Conn
+
+	hMutex sync.RWMutex
+	// h holds the current handler of the session.
+	h Handler
 
 	serverMu       sync.RWMutex
 	server         *server.Server
@@ -33,7 +37,7 @@ type Session struct {
 	uuid uuid.UUID
 
 	transferring atomic.Bool
-	closed       atomic.Bool
+	once         sync.Once
 }
 
 // All returns all of the connected sessions on the proxy.
@@ -56,14 +60,12 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 }
 
 // New creates a new Session with the provided connection and target server.
-func New(conn *minecraft.Conn, clientPacketFunc, serverPacketFunc func(s *Session, pk packet.Packet) bool) error {
+func New(conn *minecraft.Conn) (*Session, error) {
 	s := &Session{
-		conn:       conn,
 		translator: newTranslator(conn.GameData()),
+		conn:       conn,
 
-		clientPacketFunc: clientPacketFunc,
-		serverPacketFunc: serverPacketFunc,
-
+		h:    NopHandler{},
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
 	}
 
@@ -72,17 +74,18 @@ func New(conn *minecraft.Conn, clientPacketFunc, serverPacketFunc func(s *Sessio
 
 	srvConn, err := s.dial(srv)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	s.serverConn = srvConn
 	if err := s.login(); err != nil {
-		return err
+		return nil, err
 	}
 	handlePackets(s)
 	sessions.Store(s.UUID(), s)
 	srv.IncrementPlayerCount()
 	query.IncrementPlayerCount()
-	return nil
+	return s, nil
 }
 
 func (s *Session) dial(srv *server.Server) (*minecraft.Conn, error) {
@@ -95,24 +98,19 @@ func (s *Session) dial(srv *server.Server) (*minecraft.Conn, error) {
 }
 
 // login performs the initial login sequence for the session.
-func (s *Session) login() error {
+func (s *Session) login() (err error) {
 	var g sync.WaitGroup
 	g.Add(2)
-	var loginErr error = nil
 	go func() {
-		if err := s.conn.StartGameTimeout(s.ServerConn().GameData(), time.Minute); err != nil {
-			loginErr = err
-		}
+		err = s.conn.StartGameTimeout(s.ServerConn().GameData(), time.Minute)
 		g.Done()
 	}()
 	go func() {
-		if err := s.ServerConn().DoSpawnTimeout(time.Minute); err != nil {
-			loginErr = err
-		}
+		err = s.ServerConn().DoSpawnTimeout(time.Minute)
 		g.Done()
 	}()
 	g.Wait()
-	return loginErr
+	return
 }
 
 // Conn returns the active connection for the session.
@@ -139,51 +137,70 @@ func (s *Session) UUID() uuid.UUID {
 	return s.uuid
 }
 
-func (s *Session) Transfer(srv *server.Server) error {
+func (s *Session) Handle(h Handler) {
+	s.hMutex.Lock()
+	defer s.hMutex.Unlock()
+
+	if h == nil {
+		h = NopHandler{}
+	}
+	s.h = h
+}
+
+func (s *Session) Transfer(srv *server.Server) (err error) {
 	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
 	}
 
-	conn, err := s.dial(srv)
-	if err != nil {
-		return err
-	}
-	if err := conn.DoSpawnTimeout(time.Minute); err != nil {
-		return err
-	}
+	ctx := event.C()
+	s.handler().HandleTransfer(ctx, srv)
 
-	s.serverMu.Lock()
-	s.tempServerConn = conn
-	s.serverMu.Unlock()
+	ctx.Continue(func() {
+		conn, err := s.dial(srv)
+		if err != nil {
+			return
+		}
+		if err = conn.DoSpawnTimeout(time.Minute); err != nil {
+			return
+		}
 
-	pos := s.conn.GameData().PlayerPosition
-	_ = s.conn.WritePacket(&packet.ChangeDimension{
-		Dimension: packet.DimensionNether,
-		Position:  pos,
+		s.serverMu.Lock()
+		s.tempServerConn = conn
+		s.serverMu.Unlock()
+
+		pos := s.conn.GameData().PlayerPosition
+		_ = s.conn.WritePacket(&packet.ChangeDimension{
+			Dimension: packet.DimensionNether,
+			Position:  pos,
+		})
+
+		// TODO: Clear inventory, scoreboard & entities
+
+		chunkX := int32(pos.X()) >> 4
+		chunkZ := int32(pos.Z()) >> 4
+		for x := int32(-1); x <= 1; x++ {
+			for z := int32(-1); z <= 1; z++ {
+				_ = s.conn.WritePacket(&packet.LevelChunk{
+					ChunkX:        chunkX + x,
+					ChunkZ:        chunkZ + z,
+					SubChunkCount: 0,
+					RawPayload:    emptyChunkData,
+				})
+			}
+		}
+
+		s.serverMu.Lock()
+		s.server.DecrementPlayerCount()
+		s.server = srv
+		s.server.IncrementPlayerCount()
+		s.serverMu.Unlock()
 	})
 
-	// TODO: Clear inventory, scoreboard & entities
+	ctx.Stop(func() {
+		s.setTransferring(false)
+	})
 
-	chunkX := int32(pos.X()) >> 4
-	chunkZ := int32(pos.Z()) >> 4
-	for x := int32(-1); x <= 1; x++ {
-		for z := int32(-1); z <= 1; z++ {
-			_ = s.conn.WritePacket(&packet.LevelChunk{
-				ChunkX:        chunkX + x,
-				ChunkZ:        chunkZ + z,
-				SubChunkCount: 0,
-				RawPayload:    emptyChunkData,
-			})
-		}
-	}
-
-	s.serverMu.Lock()
-	s.server.DecrementPlayerCount()
-	s.server = srv
-	s.server.IncrementPlayerCount()
-	s.serverMu.Unlock()
-
-	return nil
+	return
 }
 
 // Transferring returns if the session is currently transferring to a different server or not.
@@ -191,20 +208,25 @@ func (s *Session) Transferring() bool {
 	return s.transferring.Load()
 }
 
-// SetTransferring sets if the session is transferring to a different server.
-func (s *Session) SetTransferring(v bool) {
+// setTransferring sets if the session is transferring to a different server.
+func (s *Session) setTransferring(v bool) {
 	s.transferring.Store(v)
+}
+
+func (s *Session) handler() Handler {
+	s.hMutex.RLock()
+	handler := s.h
+	s.hMutex.RUnlock()
+	return handler
 }
 
 // Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
-	if !s.closed.CAS(false, true) {
-		return
-	}
+	s.once.Do(func() {
+		_ = s.conn.Close()
+		_ = s.ServerConn().Close()
 
-	_ = s.conn.Close()
-	_ = s.ServerConn().Close()
-
-	s.server.DecrementPlayerCount()
-	query.DecrementPlayerCount()
+		s.server.DecrementPlayerCount()
+		query.DecrementPlayerCount()
+	})
 }

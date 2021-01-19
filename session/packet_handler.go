@@ -1,6 +1,7 @@
 package session
 
 import (
+	"github.com/paroxity/portal/event"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"log"
 )
@@ -9,9 +10,7 @@ import (
 // translations are also handled here.
 func handlePackets(s *Session) {
 	go func() {
-		defer func() {
-			s.Close()
-		}()
+		defer s.Close()
 		for {
 			pk, err := s.Conn().ReadPacket()
 			if err != nil {
@@ -47,20 +46,17 @@ func handlePackets(s *Session) {
 				pk.XUID = ""
 			}
 
-			if s.clientPacketFunc != nil {
-				if s.clientPacketFunc(s, pk) {
-					continue
-				}
-			}
+			ctx := event.C()
+			s.handler().HandleServerBoundPacket(ctx, pk)
 
-			_ = s.ServerConn().WritePacket(pk)
+			ctx.Continue(func() {
+				_ = s.ServerConn().WritePacket(pk)
+			})
 		}
 	}()
 
 	go func() {
-		defer func() {
-			s.Close()
-		}()
+		defer s.Close()
 		for {
 			conn := s.ServerConn()
 			pk, err := conn.ReadPacket()
@@ -73,13 +69,12 @@ func handlePackets(s *Session) {
 			}
 			s.translatePacket(pk)
 
-			if s.serverPacketFunc != nil {
-				if s.serverPacketFunc(s, pk) {
-					continue
-				}
-			}
+			ctx := event.C()
+			s.handler().HandleClientBoundPacket(ctx, pk)
 
-			_ = s.Conn().WritePacket(pk)
+			ctx.Continue(func() {
+				_ = s.Conn().WritePacket(pk)
+			})
 		}
 	}()
 }

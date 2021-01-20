@@ -9,17 +9,9 @@ import (
 	"strings"
 )
 
-var (
-	handlers map[uint32]packetHandler
-	pool     packet.Pool
-)
+var pool packet.Pool
 
 func init() {
-	handlers = map[uint32]packetHandler{
-		portalpacket.IDAuthRequest:     &AuthRequestHandler{},
-		portalpacket.IDTransferRequest: &TransferRequestHandler{},
-	}
-
 	packets := map[uint32]func() packet.Packet{
 		portalpacket.IDAuthRequest:      func() packet.Packet { return &portalpacket.AuthRequest{} },
 		portalpacket.IDAuthResponse:     func() packet.Packet { return &portalpacket.AuthResponse{} },

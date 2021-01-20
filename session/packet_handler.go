@@ -3,6 +3,7 @@ package session
 import (
 	"github.com/paroxity/portal/event"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/sirupsen/logrus"
 	"log"
 )
 
@@ -44,6 +45,8 @@ func handlePackets(s *Session) {
 					s.serverMu.Unlock()
 
 					s.updateTranslatorData(gameData)
+
+					logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
 
 					// TODO: Set gamemode and stuff
 					continue

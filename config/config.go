@@ -1,6 +1,9 @@
 package config
 
-import "github.com/sandertv/gophertunnel/minecraft/resource"
+import (
+	"github.com/sandertv/gophertunnel/minecraft/resource"
+	"github.com/sirupsen/logrus"
+)
 
 var (
 	maxPlayers int
@@ -10,11 +13,15 @@ var (
 	whitelisted []string
 
 	authentication bool
+	bindAddress    string
 	resourcePacks  []*resource.Pack
 	forceTextures  bool
 
 	socketAddress string
 	socketSecret  string
+
+	logFile  string
+	logLevel logrus.Level
 )
 
 func MaxPlayers() int {
@@ -37,6 +44,10 @@ func Authentication() bool {
 	return authentication
 }
 
+func BindAddress() string {
+	return bindAddress
+}
+
 func ResourcePacks() []*resource.Pack {
 	return resourcePacks
 }
@@ -51,4 +62,12 @@ func SocketAddress() string {
 
 func SocketSecret() string {
 	return socketSecret
+}
+
+func LogFile() string {
+	return logFile
+}
+
+func LogLevel() logrus.Level {
+	return logLevel
 }

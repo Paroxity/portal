@@ -1,2 +1,6 @@
+# JetBrains
 .idea/
+
+# Portal
 config.json
+*.log

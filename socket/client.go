@@ -8,6 +8,7 @@ import (
 	portalpacket "github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/sirupsen/logrus"
 	"net"
 )
 
@@ -37,7 +38,7 @@ func (c *Client) Name() string {
 
 // Close closes the client and related connections.
 func (c *Client) Close() error {
-	fmt.Println("Closing connection")
+	logrus.Debugf("Socket connection \"%s\" closed\n", c.name)
 
 	c.buf.Reset()
 

@@ -8,6 +8,7 @@ require (
 	github.com/klauspost/compress v1.11.4 // indirect
 	github.com/sandertv/go-raknet v1.10.0 // indirect
 	github.com/sandertv/gophertunnel v1.10.3
+	github.com/sirupsen/logrus v1.7.0
 	go.uber.org/atomic v1.7.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6 // indirect

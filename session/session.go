@@ -8,6 +8,7 @@ import (
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/atomic"
 	"sync"
 	"time"
@@ -156,6 +157,8 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
 	}
+
+	logrus.Infof("Transferring %s to server %s in group %s\n", s.conn.IdentityData().DisplayName, srv.Name(), srv.Group())
 
 	ctx := event.C()
 	s.handler().HandleTransfer(ctx, srv)

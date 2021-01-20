@@ -7,6 +7,7 @@ import (
 	portalpacket "github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/sirupsen/logrus"
 	_ "unsafe"
 )
 
@@ -18,6 +19,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 	pk := p.(*portalpacket.AuthRequest)
 
 	if pk.Secret != config.SocketSecret() {
+		logrus.Errorf("Failed socket authentication attempt from \"%s\": Incorrect secret provided", pk.Name)
 		return c.WritePacket(&portalpacket.AuthResponse{
 			Status: portalpacket.AuthResponseIncorrectSecret,
 		})
@@ -33,6 +35,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 
 		g, ok := server.GroupFromName(group)
 		if !ok {
+			logrus.Errorf("Failed socket authentication attempt from \"%s\": Group \"%s\" not found", pk.Name, group)
 			return c.WritePacket(&portalpacket.AuthResponse{
 				Status: portalpacket.AuthResponseInvalidData,
 			})
@@ -40,9 +43,10 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 
 		s, ok := g.Server(pk.Name)
 		if !ok {
-			s = server.New(pk.Name, address)
+			s = server.New(pk.Name, g.Name(), address)
 			g.AddServer(s)
 		} else if s.Connected() {
+			logrus.Errorf("Failed socket authentication attempt from \"%s\": Server is already connected\n", pk.Name)
 			return c.WritePacket(&portalpacket.AuthResponse{
 				Status: portalpacket.AuthResponseInvalidData,
 			})
@@ -60,6 +64,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		})
 	}
 
+	logrus.Infof("Socket connection \"%s\" successfully authenticated\n", pk.Name)
 	return c.WritePacket(&portalpacket.AuthResponse{
 		Status: portalpacket.AuthResponseSuccess,
 	})

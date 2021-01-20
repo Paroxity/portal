@@ -6,6 +6,7 @@ import (
 
 type Server struct {
 	name    string
+	group   string
 	address string
 
 	connection Client
@@ -13,9 +14,10 @@ type Server struct {
 	playerCount atomic.Int64
 }
 
-func New(name, address string) *Server {
+func New(name, group, address string) *Server {
 	s := &Server{
 		name:    name,
+		group:   group,
 		address: address,
 	}
 
@@ -24,6 +26,10 @@ func New(name, address string) *Server {
 
 func (s *Server) Name() string {
 	return s.name
+}
+
+func (s *Server) Group() string {
+	return s.group
 }
 
 func (s *Server) Address() string {

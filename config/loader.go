@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/resource"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,6 +22,7 @@ type config struct {
 		Players []string
 	}
 	Proxy struct {
+		BindAddress    string
 		Groups         map[string]map[string]string
 		DefaultGroup   string
 		Authentication bool
@@ -30,6 +32,10 @@ type config struct {
 	Socket struct {
 		BindAddress string
 		Secret      string
+	}
+	Logger struct {
+		File  string
+		Debug bool
 	}
 }
 
@@ -42,6 +48,7 @@ func init() {
 func Load() error {
 	c := config{}
 	c.Query.MOTD = "Portal"
+	c.Proxy.BindAddress = "0.0.0.0:19132"
 	c.Proxy.Groups = map[string]map[string]string{
 		"Hub": {
 			"Hub1": "127.0.0.1:19133",
@@ -50,6 +57,7 @@ func Load() error {
 	c.Proxy.DefaultGroup = "Hub"
 	c.Proxy.Authentication = true
 	c.Socket.BindAddress = "127.0.0.1:19131"
+	c.Logger.File = "proxy.log"
 
 	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
 		data, err := json.MarshalIndent(c, "", "    ")
@@ -81,7 +89,7 @@ func Load() error {
 	for name, group := range c.Proxy.Groups {
 		g := server.NewGroup(name)
 		for name, address := range group {
-			g.AddServer(server.New(name, address))
+			g.AddServer(server.New(name, g.Name(), address))
 		}
 
 		server.AddGroup(g)
@@ -94,6 +102,7 @@ func Load() error {
 	server.SetDefaultGroup(g)
 
 	authentication = c.Proxy.Authentication
+	bindAddress = c.Proxy.BindAddress
 	files, err := ioutil.ReadDir(c.Proxy.ResourcesDir)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -109,6 +118,12 @@ func Load() error {
 
 	socketAddress = c.Socket.BindAddress
 	socketSecret = c.Socket.Secret
+
+	logFile = c.Logger.File
+	logLevel = logrus.InfoLevel
+	if c.Logger.Debug {
+		logLevel = logrus.DebugLevel
+	}
 
 	return nil
 }

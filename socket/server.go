@@ -1,10 +1,10 @@
 package socket
 
 import (
-	"fmt"
 	"github.com/paroxity/portal/config"
 	portalpacket "github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/sirupsen/logrus"
 	"net"
 	"strings"
 )
@@ -38,13 +38,15 @@ func Listen() error {
 	if err != nil {
 		return err
 	}
+	logrus.Infof("Socket server listening on %s\n", config.SocketAddress())
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println(err)
+			logrus.Infoln(err)
 			continue
 		}
+		logrus.Debugln("Socket server accepted a new connection")
 
 		go handleClient(NewClient(conn))
 	}
@@ -60,17 +62,21 @@ func handleClient(c *Client) {
 			if containsAny(err.Error(), "EOF", "closed") {
 				return
 			}
-			fmt.Println(err)
+			logrus.Errorln(err)
 			continue
 		}
 
 		h, ok := handlers[pk.ID()]
 		if ok {
 			if err := h.Handle(pk, c); err != nil {
-				fmt.Println(err)
+				logrus.Errorln(err)
 			}
 		} else {
-			fmt.Printf("Unhandled packet %T\n", pk)
+			if c.name == "" {
+				logrus.Debugf("Unhandled packet %T from unauthorized socket connection\n", pk)
+			} else {
+				logrus.Debugf("Unhandled packet %T from %s socket connection\n", pk, c.name)
+			}
 		}
 	}
 }

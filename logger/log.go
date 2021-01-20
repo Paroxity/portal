@@ -1,7 +1,8 @@
 package logger
 
 import (
-	"fmt"
+	"github.com/mattn/go-colorable"
+	"io"
 	"os"
 	"regexp"
 	"time"
@@ -11,12 +12,15 @@ var cleaner = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 // Logger represents a Writer which writes the log to the provided file as well as stdout.
 type Logger struct {
-	file *os.File
+	file   *os.File
+	stdout io.Writer
 }
 
 // Write ...
 func (l *Logger) Write(p []byte) (int, error) {
-	fmt.Print(string(p))
+	if n, err := l.stdout.Write(p); err != nil {
+		return n, err
+	}
 
 	cleaned := cleaner.ReplaceAllString(string(p), "")
 	return l.file.WriteString(time.Now().Format("2006-1-2") + " " + cleaned)
@@ -31,6 +35,7 @@ func New(path string) (*Logger, error) {
 	}
 
 	return &Logger{
-		file: f,
+		file:   f,
+		stdout: colorable.NewColorableStdout(),
 	}, nil
 }

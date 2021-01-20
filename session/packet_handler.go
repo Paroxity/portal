@@ -20,14 +20,8 @@ func handlePackets(s *Session) {
 			s.translatePacket(pk)
 
 			switch pk := pk.(type) {
-			case *packet.AddActor:
-				s.addLoadedEntity(pk.EntityUniqueID)
-			case *packet.AddItemActor:
-				s.addLoadedEntity(pk.EntityUniqueID)
-			case *packet.AddPainting:
-				s.addLoadedEntity(pk.EntityUniqueID)
-			case *packet.AddPlayer:
-				s.addLoadedEntity(pk.EntityUniqueID)
+			case *packet.BookEdit:
+				pk.XUID = ""
 			case *packet.PlayerAction:
 				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
 					s.serverMu.Lock()
@@ -43,14 +37,14 @@ func handlePackets(s *Session) {
 					s.tempServerConn = nil
 					s.serverMu.Unlock()
 
+					_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
+
 					s.updateTranslatorData(gameData)
 
 					// TODO: Set gamemode and stuff
 					continue
 				}
 			case *packet.Text:
-				pk.XUID = ""
-			case *packet.BookEdit:
 				pk.XUID = ""
 			}
 
@@ -78,8 +72,32 @@ func handlePackets(s *Session) {
 			s.translatePacket(pk)
 
 			switch pk := pk.(type) {
+			case *packet.AddActor:
+				s.addEntity(pk.EntityUniqueID)
+			case *packet.AddItemActor:
+				s.addEntity(pk.EntityUniqueID)
+			case *packet.AddPainting:
+				s.addEntity(pk.EntityUniqueID)
+			case *packet.AddPlayer:
+				s.addEntity(pk.EntityUniqueID)
+			case *packet.MobEffect:
+				if pk.Operation == packet.MobEffectAdd {
+					s.addEffect(pk.EffectType)
+				} else if pk.Operation == packet.MobEffectRemove {
+					s.removeEffect(pk.EffectType)
+				}
+			case *packet.PlayerList:
+				if pk.ActionType == packet.PlayerListActionAdd {
+					for _, e := range pk.Entries {
+						s.addToPlayerList(e.UUID)
+					}
+				} else {
+					for _, e := range pk.Entries {
+						s.removeFromPlayerList(e.UUID)
+					}
+				}
 			case *packet.RemoveActor:
-				s.removeLoadedEntity(pk.EntityUniqueID)
+				s.removeEntity(pk.EntityUniqueID)
 			}
 
 			ctx := event.C()

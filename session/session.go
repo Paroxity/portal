@@ -7,6 +7,7 @@ import (
 	"github.com/paroxity/portal/query"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"go.uber.org/atomic"
 	"sync"
@@ -37,6 +38,12 @@ type Session struct {
 	entityMu sync.Mutex
 	entities map[int64]struct{}
 
+	playerListMu sync.Mutex
+	playerList   map[uuid.UUID]struct{}
+
+	effectsMu sync.Mutex
+	effects   map[int32]struct{}
+
 	uuid uuid.UUID
 
 	transferring atomic.Bool
@@ -62,13 +69,14 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 	return s.(*Session), true
 }
 
-// New creates a new Session with the provided connection and target server.
+// New creates a new Session with the provided connection.
 func New(conn *minecraft.Conn) (*Session, error) {
 	s := &Session{
-		translator: newTranslator(conn.GameData()),
-		conn:       conn,
+		conn: conn,
 
-		entities: make(map[int64]struct{}),
+		entities:   map[int64]struct{}{},
+		playerList: map[uuid.UUID]struct{}{},
+		effects:    map[int32]struct{}{},
 
 		h:    NopHandler{},
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
@@ -86,6 +94,9 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	if err := s.login(); err != nil {
 		return nil, err
 	}
+
+	s.translator = newTranslator(conn.GameData())
+
 	handlePackets(s)
 	sessions.Store(s.UUID(), s)
 	srv.IncrementPlayerCount()
@@ -179,16 +190,24 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 			Position:  pos,
 		})
 
+		var w sync.WaitGroup
+		w.Add(3)
+		go func() {
+			s.clearEntities()
+			w.Done()
+		}()
+		go func() {
+			s.clearPlayerList()
+			w.Done()
+		}()
+		go func() {
+			s.clearEffects()
+			w.Done()
+		}()
+
+		w.Wait()
+
 		// TODO: Clear inventory & scoreboard
-
-		s.entityMu.Lock()
-		e := s.entities
-		s.entities = map[int64]struct{}{}
-		s.entityMu.Unlock()
-
-		for id := range e {
-			_ = s.conn.WritePacket(&packet.RemoveActor{EntityUniqueID: id})
-		}
 
 		chunkX := int32(pos.X()) >> 4
 		chunkZ := int32(pos.Z()) >> 4
@@ -234,29 +253,98 @@ func (s *Session) handler() Handler {
 	return handler
 }
 
-func (s *Session) addLoadedEntity(eid int64) {
-	s.entityMu.Lock()
-	s.entities[eid] = struct{}{}
-	s.entityMu.Unlock()
-}
-
-func (s *Session) removeLoadedEntity(eid int64) {
-	s.entityMu.Lock()
-	delete(s.entities, eid)
-	s.entityMu.Unlock()
-}
-
 // Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
 	s.once.Do(func() {
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
 
-		s.entityMu.Lock()
 		s.entities = map[int64]struct{}{}
-		s.entityMu.Unlock()
+		s.playerList = map[uuid.UUID]struct{}{}
 
 		s.server.DecrementPlayerCount()
 		query.DecrementPlayerCount()
 	})
+}
+
+// addEntity adds the entity id to the entities map.
+func (s *Session) addEntity(eid int64) {
+	s.entityMu.Lock()
+	s.entities[eid] = struct{}{}
+	s.entityMu.Unlock()
+}
+
+// clearEntities flushes the entities map and despawns the entities for the client.
+func (s *Session) clearEntities() {
+	s.entityMu.Lock()
+	for id := range s.entities {
+		_ = s.conn.WritePacket(&packet.RemoveActor{EntityUniqueID: id})
+	}
+
+	s.entities = map[int64]struct{}{}
+	s.entityMu.Unlock()
+}
+
+// removeEntity removes the entity id from the entities map.
+func (s *Session) removeEntity(eid int64) {
+	s.entityMu.Lock()
+	delete(s.entities, eid)
+	s.entityMu.Unlock()
+}
+
+// addToPlayerList adds the uuid to the playerList map.
+func (s *Session) addToPlayerList(uid uuid.UUID) {
+	s.playerListMu.Lock()
+	s.playerList[uid] = struct{}{}
+	s.playerListMu.Unlock()
+}
+
+// clearPlayerList flushes the playerList map and removes all the entries for the client.
+func (s *Session) clearPlayerList() {
+	s.playerListMu.Lock()
+	var entries = make([]protocol.PlayerListEntry, len(s.playerList))
+	for uid := range s.playerList {
+		entries = append(entries, protocol.PlayerListEntry{UUID: uid})
+	}
+
+	_ = s.conn.WritePacket(&packet.PlayerList{ActionType: packet.PlayerListActionRemove, Entries: entries})
+
+	s.playerList = map[uuid.UUID]struct{}{}
+	s.playerListMu.Unlock()
+}
+
+// removeFromPlayerList removes the uuid from the playerList map.
+func (s *Session) removeFromPlayerList(uid uuid.UUID) {
+	s.playerListMu.Lock()
+	delete(s.playerList, uid)
+	s.playerListMu.Unlock()
+}
+
+// addEffect adds the effect type to the effects map.
+func (s *Session) addEffect(e int32) {
+	s.effectsMu.Lock()
+	s.effects[e] = struct{}{}
+	s.effectsMu.Unlock()
+}
+
+// clearEffects flushes the effects map and removes all the effects for the client.
+func (s *Session) clearEffects() {
+	s.effectsMu.Lock()
+	for i := range s.effects {
+		_ = s.conn.WritePacket(&packet.MobEffect{
+			EntityRuntimeID: s.originalRuntimeID,
+			Operation:       packet.MobEffectRemove,
+			EffectType:      i,
+		})
+	}
+
+	s.effects = map[int32]struct{}{}
+	s.effectsMu.Unlock()
+}
+
+// removeEffect removes the effect type from the effects map.
+func (s *Session) removeEffect(e int32) {
+	s.effectsMu.Lock()
+	delete(s.effects, e)
+	s.effectsMu.Unlock()
 }

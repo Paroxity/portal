@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/sandertv/gophertunnel/minecraft"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"go.uber.org/atomic"
 )
@@ -115,11 +116,15 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.SetScore:
 		for i := range pk.Entries {
-			pk.Entries[i].EntityUniqueID = t.translateUniqueID(pk.Entries[i].EntityUniqueID)
+			if pk.Entries[i].IdentityType != protocol.ScoreboardIdentityFakePlayer {
+				pk.Entries[i].EntityUniqueID = t.translateUniqueID(pk.Entries[i].EntityUniqueID)
+			}
 		}
 	case *packet.SetScoreboardIdentity:
-		for i := range pk.Entries {
-			pk.Entries[i].EntityUniqueID = t.translateUniqueID(pk.Entries[i].EntityUniqueID)
+		if pk.ActionType != packet.ScoreboardIdentityActionClear {
+			for i := range pk.Entries {
+				pk.Entries[i].EntityUniqueID = t.translateUniqueID(pk.Entries[i].EntityUniqueID)
+			}
 		}
 	case *packet.ShowCredits:
 		pk.PlayerRuntimeID = t.translateRuntimeID(pk.PlayerRuntimeID)

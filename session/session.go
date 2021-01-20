@@ -84,6 +84,9 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	}
 
 	srv := LoadBalancer()(s)
+	if srv == nil {
+		return nil, errors.New("load balancer did not return a server for the player to join")
+	}
 	s.server = srv
 
 	srvConn, err := s.dial(srv)

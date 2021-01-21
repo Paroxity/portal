@@ -9,6 +9,10 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/scylladb/go-set/b16set"
+	"github.com/scylladb/go-set/i32set"
+	"github.com/scylladb/go-set/i64set"
+	"github.com/scylladb/go-set/strset"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/atomic"
 	"sync"
@@ -36,11 +40,11 @@ type Session struct {
 	serverConn     *minecraft.Conn
 	tempServerConn *minecraft.Conn
 
-	entities    map[int64]struct{}
-	playerList  map[uuid.UUID]struct{}
-	effects     map[int32]struct{}
-	bossBars    map[int64]struct{}
-	scoreboards map[string]struct{}
+	entities    *i64set.Set
+	playerList  *b16set.Set
+	effects     *i32set.Set
+	bossBars    *i64set.Set
+	scoreboards *strset.Set
 
 	uuid uuid.UUID
 
@@ -72,11 +76,11 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	s := &Session{
 		conn: conn,
 
-		entities:    map[int64]struct{}{},
-		playerList:  map[uuid.UUID]struct{}{},
-		effects:     map[int32]struct{}{},
-		bossBars:    map[int64]struct{}{},
-		scoreboards: map[string]struct{}{},
+		entities:    i64set.New(),
+		playerList:  b16set.New(),
+		effects:     i32set.New(),
+		bossBars:    i64set.New(),
+		scoreboards: strset.New(),
 
 		h:    NopHandler{},
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
@@ -245,109 +249,71 @@ func (s *Session) Close() {
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
 
-		s.entities = map[int64]struct{}{}
-		s.playerList = map[uuid.UUID]struct{}{}
+		s.entities.Clear()
+		s.playerList.Clear()
+		s.effects.Clear()
+		s.bossBars.Clear()
+		s.scoreboards.Clear()
 
 		s.server.DecrementPlayerCount()
 		query.DecrementPlayerCount()
 	})
 }
 
-// addEntity adds the entity id to the entities map.
-func (s *Session) addEntity(eid int64) {
-	s.entities[eid] = struct{}{}
-}
-
 // clearEntities flushes the entities map and despawns the entities for the client.
 func (s *Session) clearEntities() {
-	for id := range s.entities {
+	s.entities.Each(func(id int64) bool {
 		_ = s.conn.WritePacket(&packet.RemoveActor{EntityUniqueID: id})
-	}
+		return true
+	})
 
-	s.entities = map[int64]struct{}{}
-}
-
-// removeEntity removes the entity id from the entities map.
-func (s *Session) removeEntity(eid int64) {
-	delete(s.entities, eid)
-}
-
-// addToPlayerList adds the uuid to the playerList map.
-func (s *Session) addToPlayerList(uid uuid.UUID) {
-	s.playerList[uid] = struct{}{}
+	s.entities.Clear()
 }
 
 // clearPlayerList flushes the playerList map and removes all the entries for the client.
 func (s *Session) clearPlayerList() {
-	var entries = make([]protocol.PlayerListEntry, len(s.playerList))
-	for uid := range s.playerList {
+	var entries = make([]protocol.PlayerListEntry, s.playerList.Size())
+	s.playerList.Each(func(uid [16]byte) bool {
 		entries = append(entries, protocol.PlayerListEntry{UUID: uid})
-	}
+		return true
+	})
 
 	_ = s.conn.WritePacket(&packet.PlayerList{ActionType: packet.PlayerListActionRemove, Entries: entries})
 
-	s.playerList = map[uuid.UUID]struct{}{}
-}
-
-// removeFromPlayerList removes the uuid from the playerList map.
-func (s *Session) removeFromPlayerList(uid uuid.UUID) {
-	delete(s.playerList, uid)
-}
-
-// addEffect adds the effect type to the effects map.
-func (s *Session) addEffect(e int32) {
-	s.effects[e] = struct{}{}
+	s.playerList.Clear()
 }
 
 // clearEffects flushes the effects map and removes all the effects for the client.
 func (s *Session) clearEffects() {
-	for i := range s.effects {
+	s.effects.Each(func(i int32) bool {
 		_ = s.conn.WritePacket(&packet.MobEffect{
 			EntityRuntimeID: s.originalRuntimeID,
 			Operation:       packet.MobEffectRemove,
 			EffectType:      i,
 		})
-	}
+		return true
+	})
 
-	s.effects = map[int32]struct{}{}
-}
-
-// removeEffect removes the effect type from the effects map.
-func (s *Session) removeEffect(e int32) {
-	delete(s.effects, e)
-}
-
-func (s *Session) addBossBar(b int64) {
-	s.bossBars[b] = struct{}{}
+	s.effects.Clear()
 }
 
 func (s *Session) clearBossBars() {
-	for b := range s.bossBars {
+	s.bossBars.Each(func(b int64) bool {
 		_ = s.conn.WritePacket(&packet.BossEvent{
 			BossEntityUniqueID: b,
 			EventType:          packet.BossEventHide,
 		})
-	}
+		return true
+	})
 
-	s.bossBars = map[int64]struct{}{}
-}
-
-func (s *Session) removeBossBar(b int64) {
-	delete(s.bossBars, b)
-}
-
-func (s *Session) addScoreboard(sb string) {
-	s.scoreboards[sb] = struct{}{}
+	s.bossBars.Clear()
 }
 
 func (s *Session) clearScoreboard() {
-	for sb := range s.scoreboards {
+	s.scoreboards.Each(func(sb string) bool {
 		_ = s.conn.WritePacket(&packet.RemoveObjective{ObjectiveName: sb})
-	}
+		return true
+	})
 
-	s.scoreboards = map[string]struct{}{}
-}
-
-func (s *Session) removeScoreboard(sb string) {
-	delete(s.scoreboards, sb)
+	s.scoreboards.Clear()
 }

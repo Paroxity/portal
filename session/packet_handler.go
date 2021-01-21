@@ -112,41 +112,41 @@ func handlePackets(s *Session) {
 
 			switch pk := pk.(type) {
 			case *packet.AddActor:
-				s.addEntity(pk.EntityUniqueID)
+				s.entities.Add(pk.EntityUniqueID)
 			case *packet.AddItemActor:
-				s.addEntity(pk.EntityUniqueID)
+				s.entities.Add(pk.EntityUniqueID)
 			case *packet.AddPainting:
-				s.addEntity(pk.EntityUniqueID)
+				s.entities.Add(pk.EntityUniqueID)
 			case *packet.AddPlayer:
-				s.addEntity(pk.EntityUniqueID)
+				s.entities.Add(pk.EntityUniqueID)
 			case *packet.BossEvent:
 				if pk.EventType == packet.BossEventShow {
-					s.addBossBar(pk.BossEntityUniqueID)
+					s.bossBars.Add(pk.BossEntityUniqueID)
 				} else if pk.EventType == packet.BossEventHide {
-					s.removeBossBar(pk.BossEntityUniqueID)
+					s.bossBars.Remove(pk.BossEntityUniqueID)
 				}
 			case *packet.MobEffect:
 				if pk.Operation == packet.MobEffectAdd {
-					s.addEffect(pk.EffectType)
+					s.effects.Add(pk.EffectType)
 				} else if pk.Operation == packet.MobEffectRemove {
-					s.removeEffect(pk.EffectType)
+					s.effects.Remove(pk.EffectType)
 				}
 			case *packet.PlayerList:
 				if pk.ActionType == packet.PlayerListActionAdd {
 					for _, e := range pk.Entries {
-						s.addToPlayerList(e.UUID)
+						s.playerList.Add(e.UUID)
 					}
 				} else {
 					for _, e := range pk.Entries {
-						s.removeFromPlayerList(e.UUID)
+						s.playerList.Remove(e.UUID)
 					}
 				}
 			case *packet.RemoveActor:
-				s.removeEntity(pk.EntityUniqueID)
+				s.entities.Remove(pk.EntityUniqueID)
 			case *packet.RemoveObjective:
-				s.removeScoreboard(pk.ObjectiveName)
+				s.scoreboards.Remove(pk.ObjectiveName)
 			case *packet.SetDisplayObjective:
-				s.addScoreboard(pk.ObjectiveName)
+				s.scoreboards.Add(pk.ObjectiveName)
 			}
 
 			ctx := event.C()

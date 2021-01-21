@@ -5,6 +5,7 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 	"log"
+	"sync"
 )
 
 // handlePackets handles the packets sent between the client and the server. Processes such as runtime
@@ -32,19 +33,54 @@ func handlePackets(s *Session) {
 						Position:  gameData.PlayerPosition,
 					})
 
+					var w sync.WaitGroup
+					w.Add(5)
+					go func() {
+						s.clearEntities()
+						w.Done()
+					}()
+					go func() {
+						s.clearPlayerList()
+						w.Done()
+					}()
+					go func() {
+						s.clearEffects()
+						w.Done()
+					}()
+					go func() {
+						s.clearBossBars()
+						w.Done()
+					}()
+					go func() {
+						s.clearScoreboard()
+						w.Done()
+					}()
+
+					_ = s.conn.WritePacket(&packet.MovePlayer{
+						EntityRuntimeID: s.originalRuntimeID,
+						Position:        gameData.PlayerPosition,
+						Pitch:           gameData.Pitch,
+						Yaw:             gameData.Yaw,
+						Mode:            packet.MoveModeReset,
+					})
+
+					_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopRain, EventData: 10000})
+					_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopThunder})
+					_ = s.conn.WritePacket(&packet.SetDifficulty{Difficulty: uint32(gameData.Difficulty)})
+					_ = s.conn.WritePacket(&packet.GameRulesChanged{GameRules: gameData.GameRules})
+					_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
+
+					w.Wait()
+
 					_ = s.serverConn.Close()
 
 					s.serverConn = s.tempServerConn
 					s.tempServerConn = nil
 					s.serverMu.Unlock()
 
-					_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
-
 					s.updateTranslatorData(gameData)
 
 					logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
-
-					// TODO: Set gamemode and stuff
 					continue
 				}
 			case *packet.Text:
@@ -66,10 +102,10 @@ func handlePackets(s *Session) {
 			conn := s.ServerConn()
 			pk, err := conn.ReadPacket()
 			if err != nil {
-				log.Println(err)
 				if conn != s.ServerConn() {
 					continue
 				}
+				log.Println(err)
 				return
 			}
 			s.translatePacket(pk)
@@ -83,6 +119,12 @@ func handlePackets(s *Session) {
 				s.addEntity(pk.EntityUniqueID)
 			case *packet.AddPlayer:
 				s.addEntity(pk.EntityUniqueID)
+			case *packet.BossEvent:
+				if pk.EventType == packet.BossEventShow {
+					s.addBossBar(pk.BossEntityUniqueID)
+				} else if pk.EventType == packet.BossEventHide {
+					s.removeBossBar(pk.BossEntityUniqueID)
+				}
 			case *packet.MobEffect:
 				if pk.Operation == packet.MobEffectAdd {
 					s.addEffect(pk.EffectType)
@@ -101,6 +143,10 @@ func handlePackets(s *Session) {
 				}
 			case *packet.RemoveActor:
 				s.removeEntity(pk.EntityUniqueID)
+			case *packet.RemoveObjective:
+				s.removeScoreboard(pk.ObjectiveName)
+			case *packet.SetDisplayObjective:
+				s.addScoreboard(pk.ObjectiveName)
 			}
 
 			ctx := event.C()

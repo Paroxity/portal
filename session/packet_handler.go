@@ -34,24 +34,15 @@ func handlePackets(s *Session) {
 					})
 
 					var w sync.WaitGroup
-					w.Add(5)
+					w.Add(2)
 					go func() {
 						s.clearEntities()
-						w.Done()
-					}()
-					go func() {
-						s.clearPlayerList()
-						w.Done()
-					}()
-					go func() {
 						s.clearEffects()
 						w.Done()
 					}()
 					go func() {
+						s.clearPlayerList()
 						s.clearBossBars()
-						w.Done()
-					}()
-					go func() {
 						s.clearScoreboard()
 						w.Done()
 					}()

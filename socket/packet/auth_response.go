@@ -3,7 +3,7 @@ package packet
 import "github.com/sandertv/gophertunnel/minecraft/protocol"
 
 const (
-	AuthResponseSuccess = iota
+	AuthResponseSuccess byte = iota
 	AuthResponseIncorrectSecret
 	AuthResponseUnknownType
 	AuthResponseInvalidData

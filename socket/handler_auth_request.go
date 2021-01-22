@@ -20,9 +20,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 
 	if pk.Secret != config.SocketSecret() {
 		logrus.Errorf("Failed socket authentication attempt from \"%s\": Incorrect secret provided", pk.Name)
-		return c.WritePacket(&portalpacket.AuthResponse{
-			Status: portalpacket.AuthResponseIncorrectSecret,
-		})
+		return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseIncorrectSecret})
 	}
 
 	data := bytes.NewBuffer(pk.ExtraData)
@@ -36,9 +34,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		g, ok := server.GroupFromName(group)
 		if !ok {
 			logrus.Errorf("Failed socket authentication attempt from \"%s\": Group \"%s\" not found", pk.Name, group)
-			return c.WritePacket(&portalpacket.AuthResponse{
-				Status: portalpacket.AuthResponseInvalidData,
-			})
+			return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseInvalidData})
 		}
 
 		s, ok := g.Server(pk.Name)
@@ -47,9 +43,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 			g.AddServer(s)
 		} else if s.Connected() {
 			logrus.Errorf("Failed socket authentication attempt from \"%s\": Server is already connected\n", pk.Name)
-			return c.WritePacket(&portalpacket.AuthResponse{
-				Status: portalpacket.AuthResponseInvalidData,
-			})
+			return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseInvalidData})
 		}
 
 		c.name = pk.Name
@@ -59,15 +53,11 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 
 		server_setConn(s, c)
 	default:
-		return c.WritePacket(&portalpacket.AuthResponse{
-			Status: portalpacket.AuthResponseUnknownType,
-		})
+		return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseUnknownType})
 	}
 
 	logrus.Infof("Socket connection \"%s\" successfully authenticated\n", pk.Name)
-	return c.WritePacket(&portalpacket.AuthResponse{
-		Status: portalpacket.AuthResponseSuccess,
-	})
+	return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseSuccess})
 }
 
 //go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn

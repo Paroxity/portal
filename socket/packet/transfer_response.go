@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	TransferResponseSuccess = iota
+	TransferResponseSuccess byte = iota
 	TransferResponseGroupNotFound
 	TransferResponseServerNotFound
 	TransferResponseAlreadyOnServer

@@ -5,7 +5,7 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
 
-// Transfer request is sent by a server to request the transfer of a player.
+// TransferRequest is sent by a server to request the transfer of a player.
 type TransferRequest struct {
 	// PlayerUUID is the UUID of the player to be transferred.
 	PlayerUUID uuid.UUID

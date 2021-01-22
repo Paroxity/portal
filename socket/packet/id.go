@@ -5,4 +5,6 @@ const (
 	IDAuthResponse
 	IDTransferRequest
 	IDTransferResponse
+	IDPlayerInfoRequest
+	IDPlayerInfoResponse
 )

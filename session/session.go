@@ -246,6 +246,8 @@ func (s *Session) handler() Handler {
 // Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
 	s.once.Do(func() {
+		sessions.Delete(s.UUID())
+
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
 

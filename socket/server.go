@@ -13,10 +13,12 @@ var pool packet.Pool
 
 func init() {
 	packets := map[uint32]func() packet.Packet{
-		portalpacket.IDAuthRequest:      func() packet.Packet { return &portalpacket.AuthRequest{} },
-		portalpacket.IDAuthResponse:     func() packet.Packet { return &portalpacket.AuthResponse{} },
-		portalpacket.IDTransferRequest:  func() packet.Packet { return &portalpacket.TransferRequest{} },
-		portalpacket.IDTransferResponse: func() packet.Packet { return &portalpacket.TransferResponse{} },
+		portalpacket.IDAuthRequest:        func() packet.Packet { return &portalpacket.AuthRequest{} },
+		portalpacket.IDAuthResponse:       func() packet.Packet { return &portalpacket.AuthResponse{} },
+		portalpacket.IDTransferRequest:    func() packet.Packet { return &portalpacket.TransferRequest{} },
+		portalpacket.IDTransferResponse:   func() packet.Packet { return &portalpacket.TransferResponse{} },
+		portalpacket.IDPlayerInfoRequest:  func() packet.Packet { return &portalpacket.PlayerInfoRequest{} },
+		portalpacket.IDPlayerInfoResponse: func() packet.Packet { return &portalpacket.PlayerInfoResponse{} },
 	}
 	for id, pk := range packets {
 		packet.Register(id, pk)

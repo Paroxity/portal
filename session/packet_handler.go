@@ -78,6 +78,10 @@ func handlePackets(s *Session) {
 				pk.XUID = ""
 			}
 
+			if s.Transferring() {
+				continue
+			}
+
 			ctx := event.C()
 			s.handler().HandleServerBoundPacket(ctx, pk)
 

@@ -136,8 +136,8 @@ github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFR
 github.com/sandertv/go-raknet v1.9.1/go.mod h1:s1lD7LTts74R9csTeI4WlGcp6PmXAGX+DeJlQF3KMlg=
 github.com/sandertv/go-raknet v1.10.0 h1:KERyx6Ooc+4VmmYaa1ncByO1g18k3+Ste/wyUdCjtTw=
 github.com/sandertv/go-raknet v1.10.0/go.mod h1:s1lD7LTts74R9csTeI4WlGcp6PmXAGX+DeJlQF3KMlg=
-github.com/sandertv/gophertunnel v1.10.3 h1:pDPRvYN3cJ7jtfPXbk5sLv84cqpIU8X9n1X26MCjpo4=
-github.com/sandertv/gophertunnel v1.10.3/go.mod h1:TpC717w6p5WIDDLhQzaXeumOjCsGpsjyzxTCvA4hceg=
+github.com/sandertv/gophertunnel v1.10.5 h1:vlCCU6dkBLjReQ2lJCTtf6TCpzT/zXtXntKFIr2uC4o=
+github.com/sandertv/gophertunnel v1.10.5/go.mod h1:TpC717w6p5WIDDLhQzaXeumOjCsGpsjyzxTCvA4hceg=
 github.com/scylladb/go-set v1.0.2 h1:SkvlMCKhP0wyyct6j+0IHJkBkSZL+TDzZ4E7f7BCcRE=
 github.com/scylladb/go-set v1.0.2/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
 github.com/sirupsen/logrus v1.7.0 h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=

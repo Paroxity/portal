@@ -23,12 +23,14 @@ func (*PlayerInfoResponse) ID() uint32 {
 
 func (pk *PlayerInfoResponse) Marshal(w *protocol.Writer) {
 	w.UUID(&pk.PlayerUUID)
+	w.Uint8(&pk.Status)
 	w.String(&pk.XUID)
 	w.String(&pk.Address)
 }
 
 func (pk *PlayerInfoResponse) Unmarshal(r *protocol.Reader) {
 	r.UUID(&pk.PlayerUUID)
+	r.Uint8(&pk.Status)
 	r.String(&pk.XUID)
 	r.String(&pk.Address)
 }

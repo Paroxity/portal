@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8
 	github.com/sandertv/go-raknet v1.10.0 // indirect
 	github.com/sandertv/gophertunnel v1.10.5
-	github.com/scylladb/go-set v1.0.2
+	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.7.0
 	go.uber.org/atomic v1.7.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect

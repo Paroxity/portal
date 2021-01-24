@@ -99,6 +99,8 @@ func New(conn *minecraft.Conn) (*Session, error) {
 
 	s.serverConn = srvConn
 	if err := s.login(); err != nil {
+		_ = srvConn.Close()
+
 		return nil, err
 	}
 

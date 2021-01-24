@@ -72,7 +72,6 @@ func handleConnection(l *minecraft.Listener, conn *minecraft.Conn) {
 	if err != nil {
 		logrus.Errorf("Unable to create session, %v\n", err)
 		_ = l.Disconnect(conn, text.Colourf("<red>%v</red>", err))
-		s.Close()
 		return
 	}
 	logrus.Infof("%s has been connected to server %s in group %s\n", s.Conn().IdentityData().DisplayName, s.Server().Name(), s.Server().Group())

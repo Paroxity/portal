@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"github.com/paroxity/portal/config"
 	"github.com/paroxity/portal/server"
-	portalpacket "github.com/paroxity/portal/socket/packet"
+	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 	_ "unsafe"
 )
@@ -16,17 +15,17 @@ type AuthRequestHandler struct{}
 
 // Handle ...
 func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
-	pk := p.(*portalpacket.AuthRequest)
+	pk := p.(*packet.AuthRequest)
 
 	if pk.Secret != config.SocketSecret() {
 		logrus.Errorf("Failed socket authentication attempt from \"%s\": Incorrect secret provided", pk.Name)
-		return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseIncorrectSecret})
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseIncorrectSecret})
 	}
 
 	data := bytes.NewBuffer(pk.ExtraData)
 	r := protocol.NewReader(data, 0)
 	switch pk.Type {
-	case portalpacket.ClientTypeServer:
+	case packet.ClientTypeServer:
 		var group, address string
 		r.String(&group)
 		r.String(&address)
@@ -34,7 +33,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 		g, ok := server.GroupFromName(group)
 		if !ok {
 			logrus.Errorf("Failed socket authentication attempt from \"%s\": Group \"%s\" not found", pk.Name, group)
-			return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseInvalidData})
+			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
 		}
 
 		s, ok := g.Server(pk.Name)
@@ -43,7 +42,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 			g.AddServer(s)
 		} else if s.Connected() {
 			logrus.Errorf("Failed socket authentication attempt from \"%s\": Server is already connected\n", pk.Name)
-			return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseInvalidData})
+			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
 		}
 
 		c.name = pk.Name
@@ -53,11 +52,11 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 
 		server_setConn(s, c)
 	default:
-		return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseUnknownType})
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnknownType})
 	}
 
 	logrus.Infof("Socket connection \"%s\" successfully authenticated\n", pk.Name)
-	return c.WritePacket(&portalpacket.AuthResponse{Status: portalpacket.AuthResponseSuccess})
+	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
 }
 
 //go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn

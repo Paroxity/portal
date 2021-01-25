@@ -5,17 +5,19 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/paroxity/portal/server"
-	portalpacket "github.com/paroxity/portal/socket/packet"
+	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	packet2 "github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 	"net"
 )
 
 // Client represents a client connected over the TCP socket system.
 type Client struct {
-	buf  *bytes.Buffer
 	conn net.Conn
+
+	pool packet.Pool
+	buf  *bytes.Buffer
 
 	name       string
 	clientType uint8
@@ -24,8 +26,10 @@ type Client struct {
 
 func NewClient(conn net.Conn) *Client {
 	return &Client{
-		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
 		conn: conn,
+
+		pool: packet.NewPool(),
+		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
 
 		extraData: make(map[string]interface{}),
 	}
@@ -40,17 +44,11 @@ func (c *Client) Name() string {
 func (c *Client) Close() error {
 	logrus.Debugf("Socket connection \"%s\" closed\n", c.name)
 
-	c.buf.Reset()
-
 	switch c.clientType {
-	case portalpacket.ClientTypeServer:
+	case packet.ClientTypeServer:
 		if name, ok := c.extraData["group"]; ok {
 			g, _ := server.GroupFromName(name.(string))
-			s, ok := g.Server(c.name)
-			if !ok {
-				// wtf how
-				break
-			}
+			s, _ := g.Server(c.name)
 
 			server_setConn(s, nil)
 		}
@@ -78,12 +76,12 @@ func (c *Client) ReadPacket() (packet.Packet, error) {
 
 	buf := bytes.NewBuffer(data)
 
-	header := &packet.Header{}
+	header := &packet2.Header{}
 	if err := header.Read(buf); err != nil {
 		return nil, err
 	}
 
-	pk, ok := pool[header.PacketID]
+	pk, ok := c.pool[header.PacketID]
 	if !ok {
 		return nil, fmt.Errorf("unknown packet %v", header.PacketID)
 	}
@@ -99,7 +97,7 @@ func (c *Client) ReadPacket() (packet.Packet, error) {
 // WritePacket writes a packet to the client. Since it's a TCP connection, the payload is prefixed with a
 // length so the client can read the exact length of the packet.
 func (c *Client) WritePacket(pk packet.Packet) error {
-	header := &packet.Header{PacketID: pk.ID()}
+	header := &packet2.Header{PacketID: pk.ID()}
 	if err := header.Write(c.buf); err != nil {
 		return err
 	}
@@ -119,6 +117,7 @@ func (c *Client) WritePacket(pk packet.Packet) error {
 	if _, err := c.conn.Write(buf.Bytes()); err != nil {
 		return err
 	}
+
 	c.buf.Reset()
 
 	return nil

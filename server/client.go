@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/paroxity/portal/socket/packet"
 	"io"
 )
 

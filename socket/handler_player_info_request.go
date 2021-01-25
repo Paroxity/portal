@@ -2,16 +2,15 @@ package socket
 
 import (
 	"github.com/paroxity/portal/session"
-	portalpacket "github.com/paroxity/portal/socket/packet"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/paroxity/portal/socket/packet"
 )
 
 type PlayerInfoRequest struct{}
 
 func (*PlayerInfoRequest) Handle(p packet.Packet, c *Client) error {
-	pk := p.(*portalpacket.PlayerInfoRequest)
+	pk := p.(*packet.PlayerInfoRequest)
 	response := func(status byte, xuid string, address string) error {
-		return c.WritePacket(&portalpacket.PlayerInfoResponse{
+		return c.WritePacket(&packet.PlayerInfoResponse{
 			PlayerUUID: pk.PlayerUUID,
 			Status:     status,
 			XUID:       xuid,
@@ -21,8 +20,8 @@ func (*PlayerInfoRequest) Handle(p packet.Packet, c *Client) error {
 
 	s, ok := session.Lookup(pk.PlayerUUID)
 	if !ok {
-		return response(portalpacket.PlayerInfoResponsePlayerNotFound, "", "")
+		return response(packet.PlayerInfoResponsePlayerNotFound, "", "")
 	}
 
-	return response(portalpacket.PlayerInfoResponseSuccess, s.Conn().IdentityData().XUID, s.Conn().RemoteAddr().String())
+	return response(packet.PlayerInfoResponseSuccess, s.Conn().IdentityData().XUID, s.Conn().RemoteAddr().String())
 }

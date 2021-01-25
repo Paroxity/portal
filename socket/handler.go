@@ -1,8 +1,7 @@
 package socket
 
 import (
-	portalpacket "github.com/paroxity/portal/socket/packet"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"github.com/paroxity/portal/socket/packet"
 )
 
 // PacketHandler represents a type which handles a specific packet coming from a client.
@@ -20,7 +19,7 @@ func RegisterHandler(id uint32, h PacketHandler) {
 }
 
 func init() {
-	RegisterHandler(portalpacket.IDAuthRequest, &AuthRequestHandler{})
-	RegisterHandler(portalpacket.IDTransferRequest, &TransferRequestHandler{})
-	RegisterHandler(portalpacket.IDPlayerInfoRequest, &PlayerInfoRequest{})
+	RegisterHandler(packet.IDAuthRequest, &AuthRequestHandler{})
+	RegisterHandler(packet.IDTransferRequest, &TransferRequestHandler{})
+	RegisterHandler(packet.IDPlayerInfoRequest, &PlayerInfoRequest{})
 }

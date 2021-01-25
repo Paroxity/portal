@@ -17,6 +17,9 @@ type Handler interface {
 	// HandleTransfer handles a session being transferred to another server. ctx.Cancel() may be called to
 	// cancel the transfer.
 	HandleTransfer(ctx *event.Context, svr *server.Server)
+	// HandleQuit handles the closing of a session. It is always called when the session is disconnected,
+	// regardless of the reason.
+	HandleQuit()
 }
 
 // NopHandler implements the Handler interface but does not execute any code when an event is called. The
@@ -35,3 +38,6 @@ func (NopHandler) HandleServerBoundPacket(*event.Context, packet.Packet) {}
 
 // HandleTransfer ...
 func (NopHandler) HandleTransfer(*event.Context, *server.Server) {}
+
+// HandleQuit ...
+func (NopHandler) HandleQuit() {}

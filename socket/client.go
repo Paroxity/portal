@@ -109,7 +109,7 @@ func (c *Client) WritePacket(pk packet.Packet) error {
 	c.buf.Reset()
 	c.sendMu.Unlock()
 
-	buf := bytes.NewBuffer(make([]byte, 0, 4+len(data)))
+	buf := bytes.NewBuffer(make([]byte, 0, 2+len(data)))
 
 	if err := binary.Write(buf, binary.LittleEndian, int32(len(data))); err != nil {
 		return err

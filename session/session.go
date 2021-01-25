@@ -248,16 +248,13 @@ func (s *Session) handler() Handler {
 // Close closes the session and any linked connections/counters.
 func (s *Session) Close() {
 	s.once.Do(func() {
+		s.handler().HandleQuit()
+		s.Handle(NopHandler{})
+
 		sessions.Delete(s.UUID())
 
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
-
-		s.entities.Clear()
-		s.playerList.Clear()
-		s.effects.Clear()
-		s.bossBars.Clear()
-		s.scoreboards.Clear()
 
 		s.server.DecrementPlayerCount()
 		query.DecrementPlayerCount()

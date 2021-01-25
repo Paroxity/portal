@@ -255,6 +255,9 @@ func (s *Session) Close() {
 
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()
+		if s.tempServerConn != nil {
+			_ = s.tempServerConn.Close()
+		}
 
 		s.server.DecrementPlayerCount()
 		query.DecrementPlayerCount()

@@ -10,11 +10,11 @@ type PacketHandler interface {
 	Handle(p packet.Packet, c *Client) error
 }
 
-var handlers = make(map[uint32]PacketHandler)
+var handlers = make(map[uint16]PacketHandler)
 
 // RegisterHandler registers a PacketHandler for the provided packet ID. Handlers do not stack, meaning
 // registering multiple handlers for the same id will override the previous one.
-func RegisterHandler(id uint32, h PacketHandler) {
+func RegisterHandler(id uint16, h PacketHandler) {
 	handlers[id] = h
 }
 

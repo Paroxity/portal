@@ -9,7 +9,7 @@ type PlayerInfoRequest struct {
 	PlayerUUID uuid.UUID
 }
 
-func (*PlayerInfoRequest) ID() uint32 {
+func (*PlayerInfoRequest) ID() uint16 {
 	return IDPlayerInfoRequest
 }
 

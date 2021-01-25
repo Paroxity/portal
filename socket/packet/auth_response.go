@@ -16,7 +16,7 @@ type AuthResponse struct {
 	Status byte
 }
 
-func (*AuthResponse) ID() uint32 {
+func (*AuthResponse) ID() uint16 {
 	return IDAuthResponse
 }
 

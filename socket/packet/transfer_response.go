@@ -25,7 +25,7 @@ type TransferResponse struct {
 }
 
 // ID ...
-func (*TransferResponse) ID() uint32 {
+func (*TransferResponse) ID() uint16 {
 	return IDTransferResponse
 }
 

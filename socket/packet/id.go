@@ -1,7 +1,7 @@
 package packet
 
 const (
-	IDAuthRequest uint32 = iota
+	IDAuthRequest uint16 = iota
 	IDAuthResponse
 	IDTransferRequest
 	IDTransferResponse

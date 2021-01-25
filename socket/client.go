@@ -7,9 +7,9 @@ import (
 	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	packet2 "github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 	"net"
+	"sync"
 )
 
 // Client represents a client connected over the TCP socket system.
@@ -17,7 +17,10 @@ type Client struct {
 	conn net.Conn
 
 	pool packet.Pool
-	buf  *bytes.Buffer
+
+	sendMu sync.Mutex
+	hdr    *packet.Header
+	buf    *bytes.Buffer
 
 	name       string
 	clientType uint8
@@ -75,8 +78,7 @@ func (c *Client) ReadPacket() (packet.Packet, error) {
 	}
 
 	buf := bytes.NewBuffer(data)
-
-	header := &packet2.Header{}
+	header := &packet.Header{}
 	if err := header.Read(buf); err != nil {
 		return nil, err
 	}
@@ -97,14 +99,16 @@ func (c *Client) ReadPacket() (packet.Packet, error) {
 // WritePacket writes a packet to the client. Since it's a TCP connection, the payload is prefixed with a
 // length so the client can read the exact length of the packet.
 func (c *Client) WritePacket(pk packet.Packet) error {
-	header := &packet2.Header{PacketID: pk.ID()}
-	if err := header.Write(c.buf); err != nil {
-		return err
-	}
+	c.sendMu.Lock()
+	c.hdr.PacketID = pk.ID()
+	_ = c.hdr.Write(c.buf)
 
 	pk.Marshal(protocol.NewWriter(c.buf, 0))
 
 	data := c.buf.Bytes()
+	c.buf.Reset()
+	c.sendMu.Unlock()
+
 	buf := bytes.NewBuffer(make([]byte, 0, 4+len(data)))
 
 	if err := binary.Write(buf, binary.LittleEndian, int32(len(data))); err != nil {
@@ -117,8 +121,6 @@ func (c *Client) WritePacket(pk packet.Packet) error {
 	if _, err := c.conn.Write(buf.Bytes()); err != nil {
 		return err
 	}
-
-	c.buf.Reset()
 
 	return nil
 }

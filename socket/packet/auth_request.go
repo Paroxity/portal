@@ -22,7 +22,7 @@ type AuthRequest struct {
 }
 
 // ID ...
-func (pk *AuthRequest) ID() uint32 {
+func (pk *AuthRequest) ID() uint16 {
 	return IDAuthRequest
 }
 

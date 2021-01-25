@@ -17,7 +17,7 @@ type PlayerInfoResponse struct {
 	Address    string
 }
 
-func (*PlayerInfoResponse) ID() uint32 {
+func (*PlayerInfoResponse) ID() uint16 {
 	return IDPlayerInfoResponse
 }
 

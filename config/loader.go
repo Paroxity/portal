@@ -14,29 +14,29 @@ import (
 
 type config struct {
 	Query struct {
-		MaxPlayers int
-		MOTD       string
-	}
+		MaxPlayers int    `json:"maxPlayers"`
+		MOTD       string `json:"motd"`
+	} `json:"query"`
 	Whitelist struct {
-		Enabled bool
-		Players []string
-	}
+		Enabled bool     `json:"enabled"`
+		Players []string `json:"players"`
+	} `json:"whitelist"`
 	Proxy struct {
-		BindAddress    string
-		Groups         map[string]map[string]string
-		DefaultGroup   string
-		Authentication bool
-		ResourcesDir   string
-		ForceTextures  bool
-	}
+		BindAddress    string                       `json:"bindAddress"`
+		Groups         map[string]map[string]string `json:"groups"`
+		DefaultGroup   string                       `json:"defaultGroup"`
+		Authentication bool                         `json:"authentication"`
+		ResourcesDir   string                       `json:"resourcesDir"`
+		ForceTextures  bool                         `json:"forceTextures"`
+	} `json:"proxy"`
 	Socket struct {
-		BindAddress string
-		Secret      string
-	}
+		BindAddress string `json:"bindAddress"`
+		Secret      string `json:"secret"`
+	} `json:"socket"`
 	Logger struct {
-		File  string
-		Debug bool
-	}
+		File  string `json:"file"`
+		Debug bool   `json:"debug"`
+	} `json:"logger"`
 }
 
 func init() {

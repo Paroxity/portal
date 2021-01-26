@@ -33,6 +33,7 @@ func NewClient(conn net.Conn) *Client {
 
 		pool: packet.NewPool(),
 		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
+		hdr:  &packet.Header{},
 
 		extraData: make(map[string]interface{}),
 	}

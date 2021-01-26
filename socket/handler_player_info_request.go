@@ -5,9 +5,11 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 )
 
-type PlayerInfoRequest struct{}
+// PlayerInfoRequestHandler is responsible for handling the PlayerInfoRequestHandler packet sent by servers.
+type PlayerInfoRequestHandler struct{}
 
-func (*PlayerInfoRequest) Handle(p packet.Packet, c *Client) error {
+// Handle ...
+func (*PlayerInfoRequestHandler) Handle(p packet.Packet, c *Client) error {
 	pk := p.(*packet.PlayerInfoRequest)
 	response := func(status byte, xuid string, address string) error {
 		return c.WritePacket(&packet.PlayerInfoResponse{

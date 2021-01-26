@@ -12,6 +12,8 @@ import (
 	"path"
 )
 
+// config represents the structure for the base configuration file. Documentation for the fields can be found
+// in the config.go file.
 type config struct {
 	Query struct {
 		MaxPlayers int    `json:"maxPlayers"`
@@ -45,6 +47,8 @@ func init() {
 	}
 }
 
+// Load attempts to load the configuration from the config.json file. If the file does not exist, it will be
+// created with default data. An error is returned if one occurs during the process.
 func Load() error {
 	c := config{}
 	c.Query.MOTD = "Portal"

@@ -7,6 +7,7 @@ import (
 	"go.uber.org/atomic"
 )
 
+// translator represents a data structure which holds the data needed to transfer runtime IDs for a session.
 type translator struct {
 	originalRuntimeID uint64
 	originalUniqueID  int64
@@ -15,6 +16,7 @@ type translator struct {
 	currentUniqueID  atomic.Int64
 }
 
+// newTranslator creates a new translator based off of the provided GameData from the initial server.
 func newTranslator(data minecraft.GameData) *translator {
 	return &translator{
 		originalRuntimeID: data.EntityRuntimeID,
@@ -25,11 +27,14 @@ func newTranslator(data minecraft.GameData) *translator {
 	}
 }
 
+// updateTranslatorData updates the translator with the runtime IDs from a new server.
 func (t *translator) updateTranslatorData(data minecraft.GameData) {
 	t.currentRuntimeID.Store(data.EntityRuntimeID)
 	t.currentUniqueID.Store(data.EntityUniqueID)
 }
 
+// translatePacket translates the runtime IDs in packets sent by the client and the connected server. If this
+// process is not done, weird things would happen visually on the client.
 func (t *translator) translatePacket(pk packet.Packet) {
 	switch pk := pk.(type) {
 	case *packet.ActorEvent:
@@ -152,6 +157,7 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	}
 }
 
+// translateRuntimeID returns the correct entity runtime ID for the client to function properly.
 func (t *translator) translateRuntimeID(id uint64) uint64 {
 	original := t.originalRuntimeID
 	current := t.currentRuntimeID.Load()
@@ -164,6 +170,7 @@ func (t *translator) translateRuntimeID(id uint64) uint64 {
 	return id
 }
 
+// translateUniqueID returns the correct entity unique ID for the client to function properly.
 func (t *translator) translateUniqueID(id int64) int64 {
 	original := t.originalUniqueID
 	current := t.currentUniqueID.Load()

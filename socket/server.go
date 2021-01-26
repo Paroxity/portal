@@ -56,6 +56,7 @@ func handleClient(c *Client) {
 	}
 }
 
+// containsAny checks if the string contains any of the provided sub strings.
 func containsAny(s string, subs ...string) bool {
 	for _, sub := range subs {
 		if strings.Contains(s, sub) {

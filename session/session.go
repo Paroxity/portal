@@ -113,6 +113,8 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	return s, nil
 }
 
+// dial dials a new connection to the provided server. It then returns the connection between the proxy and
+// that server, along with any error that may have occurred.
 func (s *Session) dial(srv *server.Server) (*minecraft.Conn, error) {
 	i := s.conn.IdentityData()
 	i.XUID = ""
@@ -162,6 +164,8 @@ func (s *Session) UUID() uuid.UUID {
 	return s.uuid
 }
 
+// Handle sets the handler for the current session which can be used to handle different events from the
+// session. If the handler is nil, a NopHandler is used instead.
 func (s *Session) Handle(h Handler) {
 	s.hMutex.Lock()
 	defer s.hMutex.Unlock()
@@ -172,6 +176,8 @@ func (s *Session) Handle(h Handler) {
 	s.h = h
 }
 
+// Transfer transfers the session to the provided server, returning any errro that may have occurred during
+// the initial transfer.
 func (s *Session) Transfer(srv *server.Server) (err error) {
 	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
@@ -238,6 +244,7 @@ func (s *Session) setTransferring(v bool) {
 	s.transferring.Store(v)
 }
 
+// handler() returns the handler connected to the session.
 func (s *Session) handler() Handler {
 	s.hMutex.RLock()
 	handler := s.h
@@ -301,6 +308,7 @@ func (s *Session) clearEffects() {
 	s.effects.Clear()
 }
 
+// clearBossBars clears all of the boss bars currently visible the client.
 func (s *Session) clearBossBars() {
 	s.bossBars.Each(func(b int64) bool {
 		_ = s.conn.WritePacket(&packet.BossEvent{
@@ -313,6 +321,7 @@ func (s *Session) clearBossBars() {
 	s.bossBars.Clear()
 }
 
+// clearScoreboard clears the current scoreboard visible by the client.
 func (s *Session) clearScoreboard() {
 	s.scoreboards.Each(func(sb string) bool {
 		_ = s.conn.WritePacket(&packet.RemoveObjective{ObjectiveName: sb})

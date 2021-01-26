@@ -27,6 +27,8 @@ type Client struct {
 	extraData  map[string]interface{}
 }
 
+// NewClient creates a new socket Client with default allocations and required data. It pre-allocates 4096
+// bytes to prevent allocations during runtime as much as possible.
 func NewClient(conn net.Conn) *Client {
 	return &Client{
 		conn: conn,

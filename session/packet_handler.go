@@ -64,7 +64,7 @@ func handlePackets(s *Session) {
 
 					w.Wait()
 
-					s.handler().HandleTransferPreLoginResourceStackIdentifierAvailableMobsActorCommandEventComplete(s.server)
+					s.handler().HandleTransferPreLoginComplete(s.server)
 
 					if err = s.tempServerConn.DoSpawnTimeout(time.Minute); err != nil {
 						return

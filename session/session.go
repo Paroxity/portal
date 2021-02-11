@@ -193,9 +193,6 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 		if err != nil {
 			return
 		}
-		if err = conn.DoSpawnTimeout(time.Minute); err != nil {
-			return
-		}
 
 		s.serverMu.Lock()
 		s.tempServerConn = conn

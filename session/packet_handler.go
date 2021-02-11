@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"log"
 	"sync"
+	"time"
 )
 
 // handlePackets handles the packets sent between the client and the server. Processes such as runtime
@@ -62,6 +63,12 @@ func handlePackets(s *Session) {
 					_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
 
 					w.Wait()
+
+					s.handler().HandleTransferPreLoginComplete(s.server)
+
+					if err = s.tempServerConn.DoSpawnTimeout(time.Minute); err != nil {
+						return
+					}
 
 					_ = s.serverConn.Close()
 

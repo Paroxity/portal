@@ -4,14 +4,21 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
 
+// ServerListResponse is sent by the proxy in response to ServerListResponse. It sends list of all
+// the servers connected to the proxy (including offline servers)
 type ServerListResponse struct {
+	// Servers represents all the servers connected to the proxy
 	Servers []ServerEntry
 }
 
 type ServerEntry struct {
+	// Name is name of the server
 	Name        *string
+	// Group is group of the server
 	Group       *string
+	// IsOnline returns if the server is currently online
 	IsOnline    *bool
+	// PlayerCount is count of online players connected to that server through proxy
 	PlayerCount *uint16
 }
 

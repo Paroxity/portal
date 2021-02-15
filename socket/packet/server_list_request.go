@@ -4,7 +4,9 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
 
-type ServerListRequest struct {}
+// ServerListRequest is sent by the client to request list of all the servers
+// connected to portal proxy (including offline servers)
+type ServerListRequest struct{}
 
 // ID ...
 func (*ServerListRequest) ID() uint16 {
@@ -12,7 +14,7 @@ func (*ServerListRequest) ID() uint16 {
 }
 
 // Marshal ...
-func (pk *ServerListRequest) Marshal(w *protocol.Writer) {}
+func (pk *ServerListRequest) Marshal(w *protocol.Writer){}
 
 // Unmarshal ...
-func (pk *ServerListRequest) Unmarshal(r *protocol.Reader) {}
+func (pk *ServerListRequest) Unmarshal(r *protocol.Reader){}

@@ -13,13 +13,13 @@ type ServerListResponse struct {
 
 type ServerEntry struct {
 	// Name is name of the server
-	Name        *string
+	Name        string
 	// Group is group of the server
-	Group       *string
+	Group       string
 	// IsOnline returns if the server is currently online
-	IsOnline    *bool
+	IsOnline    bool
 	// PlayerCount is count of online players connected to that server through proxy
-	PlayerCount *uint16
+	PlayerCount uint16
 }
 
 // ID ...
@@ -33,10 +33,10 @@ func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
 	w.Uint16(&l)
 
 	for _, s := range pk.Servers {
-		w.String(s.Name)
-		w.String(s.Group)
-		w.Bool(s.IsOnline)
-		w.Uint16(s.PlayerCount)
+		w.String(&s.Name)
+		w.String(&s.Group)
+		w.Bool(&s.IsOnline)
+		w.Uint16(&s.PlayerCount)
 	}
 }
 
@@ -48,10 +48,10 @@ func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
 	pk.Servers = make([]ServerEntry, l)
 	for i := uint16(0); i < l; i++ {
 		entry := ServerEntry{}
-		r.String(entry.Name)
-		r.String(entry.Group)
-		r.Bool(entry.IsOnline)
-		r.Uint16(entry.PlayerCount)
+		r.String(&entry.Name)
+		r.String(&entry.Group)
+		r.Bool(&entry.IsOnline)
+		r.Uint16(&entry.PlayerCount)
 
 		pk.Servers[i] = entry
 	}

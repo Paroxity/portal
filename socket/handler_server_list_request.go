@@ -13,16 +13,11 @@ func (*ServerListRequestHandler) Handle(_ packet.Packet, c *Client) error {
 	servers := make([]packet.ServerEntry, 0)
 	for _, g := range server.Groups() {
 		for _, s := range g.Servers() {
-			name := s.Name()
-			group := s.Group()
-			isOnline := s.Connected()
-			playerCount := uint16(s.PlayerCount())
-
 			servers = append(servers, packet.ServerEntry{
-				Name:        &name,
-				Group:       &group,
-				IsOnline:    &isOnline,
-				PlayerCount: &playerCount,
+				Name:        s.Name(),
+				Group:       s.Group(),
+				IsOnline:    s.Connected(),
+				PlayerCount: uint16(s.PlayerCount()),
 			})
 		}
 	}

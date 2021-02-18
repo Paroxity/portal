@@ -4,21 +4,22 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
 
-// ServerListResponse is sent by the proxy in response to ServerListResponse. It sends list of all
-// the servers connected to the proxy (including offline servers)
+// ServerListResponse is sent by the proxy in response to ServerListRequest. It sends list of all
+// the servers connected to the proxy
 type ServerListResponse struct {
 	// Servers represents all the servers connected to the proxy
 	Servers []ServerEntry
 }
 
+// ServerEntry represents server connected the proxy
 type ServerEntry struct {
 	// Name is name of the server
-	Name        string
+	Name string
 	// Group is group of the server
-	Group       string
-	// IsOnline returns if the server is currently online
-	IsOnline    bool
-	// PlayerCount is count of online players connected to that server through proxy
+	Group string
+	// IsOnline returns if the server is connected to the TCP socket server or not
+	IsOnline bool
+	// PlayerCount returns player count of the server
 	PlayerCount uint16
 }
 
@@ -29,8 +30,8 @@ func (*ServerListResponse) ID() uint16 {
 
 // Marshal ...
 func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
-	l := uint16(len(pk.Servers))
-	w.Uint16(&l)
+	l := uint32(len(pk.Servers))
+	w.Uint32(&l)
 
 	for _, s := range pk.Servers {
 		w.String(&s.Name)
@@ -42,11 +43,11 @@ func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
 
 // Unmarshal ...
 func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
-	var l uint16
-	r.Uint16(&l)
+	var l uint32
+	r.Uint32(&l)
 
 	pk.Servers = make([]ServerEntry, l)
-	for i := uint16(0); i < l; i++ {
+	for i := uint32(0); i < l; i++ {
 		entry := ServerEntry{}
 		r.String(&entry.Name)
 		r.String(&entry.Group)

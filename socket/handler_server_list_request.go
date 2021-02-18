@@ -5,12 +5,13 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 )
 
-// ServerListRequestHandler is responsible for handling the ServerList packet sent by servers.
+// ServerListRequestHandler is responsible for handling the ServerListRequest packet sent by servers.
 type ServerListRequestHandler struct{}
 
 // Handle ...
 func (*ServerListRequestHandler) Handle(_ packet.Packet, c *Client) error {
-	servers := make([]packet.ServerEntry, 0)
+	var servers []packet.ServerEntry
+
 	for _, g := range server.Groups() {
 		for _, s := range g.Servers() {
 			servers = append(servers, packet.ServerEntry{

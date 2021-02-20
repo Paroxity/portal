@@ -5,21 +5,21 @@ import (
 )
 
 // ServerListResponse is sent by the proxy in response to ServerListRequest. It sends list of all
-// the servers connected to the proxy
+// the servers connected to the proxy.
 type ServerListResponse struct {
-	// Servers represents all the servers connected to the proxy
+	// Servers represents all the servers connected to the proxy.
 	Servers []ServerEntry
 }
 
-// ServerEntry represents server connected the proxy
+// ServerEntry represents server connected the proxy.
 type ServerEntry struct {
-	// Name is name of the server
+	// Name is name of the server.
 	Name string
-	// Group is group of the server
+	// Group is group of the server.
 	Group string
-	// IsOnline returns if the server is connected to the TCP socket server or not
-	IsOnline bool
-	// PlayerCount returns player count of the server
+	// Online returns if the server is connected to the TCP socket server or not.
+	Online bool
+	// PlayerCount returns player count of the server.
 	PlayerCount uint16
 }
 
@@ -36,7 +36,7 @@ func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
 	for _, s := range pk.Servers {
 		w.String(&s.Name)
 		w.String(&s.Group)
-		w.Bool(&s.IsOnline)
+		w.Bool(&s.Online)
 		w.Uint16(&s.PlayerCount)
 	}
 }
@@ -51,7 +51,7 @@ func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
 		entry := ServerEntry{}
 		r.String(&entry.Name)
 		r.String(&entry.Group)
-		r.Bool(&entry.IsOnline)
+		r.Bool(&entry.Online)
 		r.Uint16(&entry.PlayerCount)
 
 		pk.Servers[i] = entry

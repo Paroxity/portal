@@ -5,7 +5,7 @@ import (
 )
 
 // ServerListRequest is sent by the client to request list of all the servers
-// connected to portal proxy (including offline servers)
+// connected to portal proxy (including offline servers).
 type ServerListRequest struct{}
 
 // ID ...

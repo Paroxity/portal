@@ -17,7 +17,7 @@ func (*ServerListRequestHandler) Handle(_ packet.Packet, c *Client) error {
 			servers = append(servers, packet.ServerEntry{
 				Name:        s.Name(),
 				Group:       s.Group(),
-				Online:    s.Connected(),
+				Online:      s.Connected(),
 				PlayerCount: uint16(s.PlayerCount()),
 			})
 		}

@@ -12,10 +12,9 @@ type ServerListRequestHandler struct{}
 func (*ServerListRequestHandler) Handle(_ packet.Packet, c *Client) error {
 	var servers []packet.ServerEntry
 
-	var entry packet.ServerEntry
 	for _, g := range server.Groups() {
 		for _, s := range g.Servers() {
-			entry = packet.ServerEntry{
+			entry := packet.ServerEntry{
 				Name:        s.Name(),
 				Group:       s.Group(),
 				Online:      s.Connected(),

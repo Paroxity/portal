@@ -20,7 +20,7 @@ type ServerEntry struct {
 	// Online returns if the server is connected to the TCP socket server or not.
 	Online bool
 	// PlayerCount returns player count of the server.
-	PlayerCount uint16
+	PlayerCount int64
 }
 
 // ID ...
@@ -37,7 +37,7 @@ func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
 		w.String(&s.Name)
 		w.String(&s.Group)
 		w.Bool(&s.Online)
-		w.Uint16(&s.PlayerCount)
+		w.Int64(&s.PlayerCount)
 	}
 }
 
@@ -52,7 +52,7 @@ func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
 		r.String(&entry.Name)
 		r.String(&entry.Group)
 		r.Bool(&entry.Online)
-		r.Uint16(&entry.PlayerCount)
+		r.Int64(&entry.PlayerCount)
 
 		pk.Servers[i] = entry
 	}

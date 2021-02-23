@@ -46,9 +46,9 @@ func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
 	var l uint32
 	r.Uint32(&l)
 
+	var entry ServerEntry
 	pk.Servers = make([]ServerEntry, l)
 	for i := uint32(0); i < l; i++ {
-		entry := ServerEntry{}
 		r.String(&entry.Name)
 		r.String(&entry.Group)
 		r.Bool(&entry.Online)

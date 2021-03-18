@@ -30,6 +30,8 @@ func init() {
 		IDTransferResponse:   func() Packet { return &TransferResponse{} },
 		IDPlayerInfoRequest:  func() Packet { return &PlayerInfoRequest{} },
 		IDPlayerInfoResponse: func() Packet { return &PlayerInfoResponse{} },
+		IDServerListRequest:  func() Packet { return &ServerListRequest{} },
+		IDServerListResponse: func() Packet { return &ServerListResponse{} },
 	}
 	for id, pk := range packets {
 		Register(id, pk)

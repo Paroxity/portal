@@ -7,4 +7,6 @@ const (
 	IDTransferResponse
 	IDPlayerInfoRequest
 	IDPlayerInfoResponse
+	IDServerListRequest
+	IDServerListResponse
 )

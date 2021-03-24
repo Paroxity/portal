@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/paroxity/portal/event"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -25,7 +26,7 @@ func handlePackets(s *Session) {
 			case *packet.BookEdit:
 				pk.XUID = ""
 			case *packet.PlayerAction:
-				if pk.ActionType == packet.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
+				if pk.ActionType == protocol.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
 					s.serverMu.Lock()
 					gameData := s.tempServerConn.GameData()
 					_ = s.conn.WritePacket(&packet.ChangeDimension{

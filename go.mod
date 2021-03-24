@@ -8,7 +8,7 @@ require (
 	github.com/klauspost/compress v1.11.4 // indirect
 	github.com/mattn/go-colorable v0.1.8
 	github.com/sandertv/go-raknet v1.10.0 // indirect
-	github.com/sandertv/gophertunnel v1.10.5
+	github.com/sandertv/gophertunnel v1.11.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.7.0
 	go.uber.org/atomic v1.7.0

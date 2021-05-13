@@ -97,9 +97,12 @@ func New(conn *minecraft.Conn) (*Session, error) {
 		return nil, err
 	}
 
+	sessions.Store(s.uuid, s)
+
 	s.serverConn = srvConn
 	if err := s.login(); err != nil {
 		_ = srvConn.Close()
+		sessions.Delete(s.uuid)
 
 		return nil, err
 	}
@@ -107,7 +110,6 @@ func New(conn *minecraft.Conn) (*Session, error) {
 	s.translator = newTranslator(conn.GameData())
 
 	handlePackets(s)
-	sessions.Store(s.UUID(), s)
 	srv.IncrementPlayerCount()
 	query.IncrementPlayerCount()
 	return s, nil

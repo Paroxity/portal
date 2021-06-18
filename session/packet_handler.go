@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/paroxity/portal/event"
+	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
@@ -77,6 +78,19 @@ func handlePackets(s *Session) {
 				}
 			case *packet.Text:
 				pk.XUID = ""
+				if pk.Message == "transfer" {
+					g, _ := server.GroupFromName("Hub")
+					if s.Server().Name() == "Hub1" {
+						_ = s.conn.WritePacket(&packet.Text{Message: "Going to Hub2"})
+						srv, _ := g.Server("Hub2")
+						_ = s.Transfer(srv)
+					} else {
+						_ = s.conn.WritePacket(&packet.Text{Message: "Going to Hub1"})
+						srv, _ := g.Server("Hub1")
+						_ = s.Transfer(srv)
+					}
+					continue
+				}
 			}
 
 			if s.Transferring() {

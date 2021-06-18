@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"time"
 )
 
 // config represents the structure for the base configuration file. Documentation for the fields can be found
@@ -31,6 +32,10 @@ type config struct {
 		ResourcesDir   string                       `json:"resourcesDir"`
 		ForceTextures  bool                         `json:"forceTextures"`
 	} `json:"proxy"`
+	PlayerLatency struct {
+		Report         bool `json:"report"`
+		UpdateInterval int  `json:"updateInterval"`
+	} `json:"playerLatency"`
 	Socket struct {
 		BindAddress string `json:"bindAddress"`
 		Secret      string `json:"secret"`
@@ -60,6 +65,8 @@ func Load() error {
 	}
 	c.Proxy.DefaultGroup = "Hub"
 	c.Proxy.Authentication = true
+	c.PlayerLatency.Report = true
+	c.PlayerLatency.UpdateInterval = 5
 	c.Socket.BindAddress = "127.0.0.1:19131"
 	c.Logger.File = "proxy.log"
 
@@ -119,6 +126,9 @@ func Load() error {
 		resourcePacks = append(resourcePacks, pack)
 	}
 	forceTextures = c.Proxy.ForceTextures
+
+	reportPlayerLatency = c.PlayerLatency.Report
+	playerLatencyUpdateInterval = time.Duration(c.PlayerLatency.UpdateInterval) * time.Second
 
 	socketAddress = c.Socket.BindAddress
 	socketSecret = c.Socket.Secret

@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/sandertv/gophertunnel/minecraft/resource"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 var (
@@ -16,6 +17,9 @@ var (
 	bindAddress    string
 	resourcePacks  []*resource.Pack
 	forceTextures  bool
+
+	reportPlayerLatency         bool
+	playerLatencyUpdateInterval time.Duration
 
 	socketAddress string
 	socketSecret  string
@@ -66,6 +70,17 @@ func ResourcePacks() []*resource.Pack {
 // the server.
 func ForceTexturePacks() bool {
 	return forceTextures
+}
+
+// ReportPlayerLatency returns if the proxy should send a player's latency to their connected server. This
+// can be disabled if not needed to save bandwidth over the network.
+func ReportPlayerLatency() bool {
+	return reportPlayerLatency
+}
+
+// PlayerLatencyUpdateInterval is how often to update the player's latency to their connected server.
+func PlayerLatencyUpdateInterval() time.Duration {
+	return playerLatencyUpdateInterval
 }
 
 // SocketAddress returns the address that the socket server should bind to. This should contain the IP

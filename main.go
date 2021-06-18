@@ -41,6 +41,9 @@ func main() {
 			panic(err)
 		}
 	}()
+	if config.ReportPlayerLatency() {
+		go socket.ReportPlayerLatency(config.PlayerLatencyUpdateInterval())
+	}
 
 	for {
 		conn, err := l.Accept()

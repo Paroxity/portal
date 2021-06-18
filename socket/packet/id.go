@@ -9,4 +9,7 @@ const (
 	IDPlayerInfoResponse
 	IDServerListRequest
 	IDServerListResponse
+	IDFindPlayerRequest
+	IDFindPlayerResponse
+	IDUpdatePlayerLatency
 )

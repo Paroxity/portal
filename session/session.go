@@ -15,6 +15,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/atomic"
+	"strings"
 	"sync"
 	"time"
 )
@@ -22,7 +23,7 @@ import (
 var (
 	emptyChunkData = make([]byte, 257)
 
-	sessions sync.Map
+	sessions, nameToUUID sync.Map
 )
 
 // Session stores the data for an active session on the proxy.
@@ -71,9 +72,18 @@ func Lookup(v uuid.UUID) (*Session, bool) {
 	return s.(*Session), true
 }
 
+// LookupByName attempts to find a session with the provided name.
+func LookupByName(name string) (*Session, bool) {
+	v, ok := nameToUUID.Load(strings.ToLower(name))
+	if !ok {
+		return nil, false
+	}
+	return Lookup(v.(uuid.UUID))
+}
+
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn) (*Session, error) {
-	s := &Session{
+func New(conn *minecraft.Conn) (s *Session, err error) {
+	s = &Session{
 		conn: conn,
 
 		entities:    i64set.New(),
@@ -86,6 +96,15 @@ func New(conn *minecraft.Conn) (*Session, error) {
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
 	}
 
+	sessions.Store(s.uuid, s)
+	nameToUUID.Store(strings.ToLower(conn.IdentityData().DisplayName), s.uuid)
+	defer func() {
+		if err != nil {
+			sessions.Delete(s.uuid)
+			nameToUUID.Delete(strings.ToLower(conn.IdentityData().DisplayName))
+		}
+	}()
+
 	srv := LoadBalancer()(s)
 	if srv == nil {
 		return nil, errors.New("load balancer did not return a server for the player to join")
@@ -97,12 +116,9 @@ func New(conn *minecraft.Conn) (*Session, error) {
 		return nil, err
 	}
 
-	sessions.Store(s.uuid, s)
-
 	s.serverConn = srvConn
-	if err := s.login(); err != nil {
+	if err = s.login(); err != nil {
 		_ = srvConn.Close()
-		sessions.Delete(s.uuid)
 
 		return nil, err
 	}
@@ -261,6 +277,7 @@ func (s *Session) Close() {
 		s.Handle(NopHandler{})
 
 		sessions.Delete(s.UUID())
+		nameToUUID.Delete(s.conn.IdentityData().DisplayName)
 
 		_ = s.conn.Close()
 		_ = s.ServerConn().Close()

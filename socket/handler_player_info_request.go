@@ -5,7 +5,7 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 )
 
-// PlayerInfoRequestHandler is responsible for handling the PlayerInfoRequestHandler packet sent by servers.
+// PlayerInfoRequestHandler is responsible for handling the PlayerInfoRequest packet sent by servers.
 type PlayerInfoRequestHandler struct{}
 
 // Handle ...

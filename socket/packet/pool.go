@@ -24,14 +24,17 @@ func NewPool() Pool {
 
 func init() {
 	packets := map[uint16]func() Packet{
-		IDAuthRequest:        func() Packet { return &AuthRequest{} },
-		IDAuthResponse:       func() Packet { return &AuthResponse{} },
-		IDTransferRequest:    func() Packet { return &TransferRequest{} },
-		IDTransferResponse:   func() Packet { return &TransferResponse{} },
-		IDPlayerInfoRequest:  func() Packet { return &PlayerInfoRequest{} },
-		IDPlayerInfoResponse: func() Packet { return &PlayerInfoResponse{} },
-		IDServerListRequest:  func() Packet { return &ServerListRequest{} },
-		IDServerListResponse: func() Packet { return &ServerListResponse{} },
+		IDAuthRequest:         func() Packet { return &AuthRequest{} },
+		IDAuthResponse:        func() Packet { return &AuthResponse{} },
+		IDTransferRequest:     func() Packet { return &TransferRequest{} },
+		IDTransferResponse:    func() Packet { return &TransferResponse{} },
+		IDPlayerInfoRequest:   func() Packet { return &PlayerInfoRequest{} },
+		IDPlayerInfoResponse:  func() Packet { return &PlayerInfoResponse{} },
+		IDServerListRequest:   func() Packet { return &ServerListRequest{} },
+		IDServerListResponse:  func() Packet { return &ServerListResponse{} },
+		IDFindPlayerRequest:   func() Packet { return &FindPlayerRequest{} },
+		IDFindPlayerResponse:  func() Packet { return &FindPlayerResponse{} },
+		IDUpdatePlayerLatency: func() Packet { return &UpdatePlayerLatency{} },
 	}
 	for id, pk := range packets {
 		Register(id, pk)

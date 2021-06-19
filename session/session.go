@@ -82,8 +82,8 @@ func LookupByName(name string) (*Session, bool) {
 }
 
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn) (s *Session, err error) {
-	s = &Session{
+func New(conn *minecraft.Conn) (_ *Session, err error) {
+	s := &Session{
 		conn: conn,
 
 		entities:    i64set.New(),

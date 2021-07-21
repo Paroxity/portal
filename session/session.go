@@ -194,7 +194,7 @@ func (s *Session) Handle(h Handler) {
 	s.h = h
 }
 
-// Transfer transfers the session to the provided server, returning any errro that may have occurred during
+// Transfer transfers the session to the provided server, returning any error that may have occurred during
 // the initial transfer.
 func (s *Session) Transfer(srv *server.Server) (err error) {
 	if !s.transferring.CAS(false, true) {

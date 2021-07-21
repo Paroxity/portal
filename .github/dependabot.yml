@@ -3,7 +3,7 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: weekly
+    interval: daily
     time: "00:00"
     timezone: America/Los_Angeles
   open-pull-requests-limit: 99

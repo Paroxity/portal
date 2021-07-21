@@ -13,7 +13,7 @@ require (
 	github.com/sandertv/gophertunnel v1.13.2-0.20210713200758-f35fb7fdf760
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.8.1
-	go.uber.org/atomic v1.8.0
+	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/image v0.0.0-20210607152325-775e3b0c77b9 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect

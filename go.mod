@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattn/go-colorable v0.1.8
 	github.com/mattn/go-isatty v0.0.13 // indirect

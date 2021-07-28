@@ -15,7 +15,11 @@ func (*FindPlayerRequestHandler) Handle(p packet.Packet, c *Client) error {
 	if !ok {
 		s, ok = session.LookupByName(pk.PlayerName)
 		if !ok {
-			return c.WritePacket(&packet.FindPlayerResponse{PlayerUUID: pk.PlayerUUID, PlayerName: pk.PlayerName})
+			return c.WritePacket(&packet.FindPlayerResponse{
+				PlayerUUID: pk.PlayerUUID,
+				PlayerName: pk.PlayerName,
+				Online:     false,
+			})
 		}
 	}
 

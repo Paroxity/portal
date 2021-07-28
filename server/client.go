@@ -15,7 +15,7 @@ type Client interface {
 	// ReadPacket reads a packet from the Client and returns it. It also returns an error in case one
 	// occurred whilst reading the packet.
 	ReadPacket() (packet.Packet, error)
-	// ReadPacket writes a packet to the Client. It returns an error in case one occurred whilst writing the
+	// WritePacket writes a packet to the Client. It returns an error in case one occurred whilst writing the
 	// packet.
 	WritePacket(pk packet.Packet) error
 }

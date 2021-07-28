@@ -1,7 +1,9 @@
 package session
 
 import (
+	"errors"
 	"github.com/paroxity/portal/event"
+	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
@@ -100,6 +102,10 @@ func handlePackets(s *Session) {
 			if err != nil {
 				if conn != s.ServerConn() {
 					continue
+				}
+				if disconnect, ok := errors.Unwrap(err).(minecraft.DisconnectError); ok {
+					logrus.Debugln(disconnect.Error())
+					_ = s.conn.WritePacket(&packet.Disconnect{Message: disconnect.Error()})
 				}
 				log.Println(err)
 				return

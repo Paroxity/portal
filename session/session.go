@@ -50,6 +50,7 @@ type Session struct {
 	uuid uuid.UUID
 
 	transferring atomic.Bool
+	postTransfer atomic.Bool
 	once         sync.Once
 }
 
@@ -224,6 +225,7 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 			Dimension: packet.DimensionNether,
 			Position:  pos,
 		})
+		_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
 
 		chunkX := int32(pos.X()) >> 4
 		chunkZ := int32(pos.Z()) >> 4

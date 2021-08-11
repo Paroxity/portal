@@ -28,54 +28,61 @@ func handlePackets(s *Session) {
 			case *packet.BookEdit:
 				pk.XUID = ""
 			case *packet.PlayerAction:
-				if pk.ActionType == protocol.PlayerActionDimensionChangeDone && s.transferring.CAS(true, false) {
-					s.serverMu.Lock()
-					gameData := s.tempServerConn.GameData()
-					_ = s.conn.WritePacket(&packet.ChangeDimension{
-						Dimension: packet.DimensionOverworld,
-						Position:  gameData.PlayerPosition,
-					})
+				if pk.ActionType == protocol.PlayerActionDimensionChangeDone {
+					if s.transferring.CAS(true, false) {
+						s.serverMu.Lock()
+						gameData := s.tempServerConn.GameData()
+						_ = s.conn.WritePacket(&packet.ChangeDimension{
+							Dimension: packet.DimensionOverworld,
+							Position:  gameData.PlayerPosition,
+						})
+						_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
 
-					var w sync.WaitGroup
-					w.Add(2)
-					go func() {
-						s.clearEntities()
-						s.clearEffects()
-						w.Done()
-					}()
-					go func() {
-						s.clearPlayerList()
-						s.clearBossBars()
-						s.clearScoreboard()
-						w.Done()
-					}()
+						var w sync.WaitGroup
+						w.Add(2)
+						go func() {
+							s.clearEntities()
+							s.clearEffects()
+							w.Done()
+						}()
+						go func() {
+							s.clearPlayerList()
+							s.clearBossBars()
+							s.clearScoreboard()
+							w.Done()
+						}()
 
-					_ = s.conn.WritePacket(&packet.MovePlayer{
-						EntityRuntimeID: s.originalRuntimeID,
-						Position:        gameData.PlayerPosition,
-						Pitch:           gameData.Pitch,
-						Yaw:             gameData.Yaw,
-						Mode:            packet.MoveModeReset,
-					})
+						_ = s.conn.WritePacket(&packet.MovePlayer{
+							EntityRuntimeID: s.originalRuntimeID,
+							Position:        gameData.PlayerPosition,
+							Pitch:           gameData.Pitch,
+							Yaw:             gameData.Yaw,
+							Mode:            packet.MoveModeReset,
+						})
 
-					_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopRain, EventData: 10000})
-					_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopThunder})
-					_ = s.conn.WritePacket(&packet.SetDifficulty{Difficulty: uint32(gameData.Difficulty)})
-					_ = s.conn.WritePacket(&packet.GameRulesChanged{GameRules: gameData.GameRules})
-					_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
+						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopRain, EventData: 10000})
+						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopThunder})
+						_ = s.conn.WritePacket(&packet.SetDifficulty{Difficulty: uint32(gameData.Difficulty)})
+						_ = s.conn.WritePacket(&packet.GameRulesChanged{GameRules: gameData.GameRules})
+						_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})
 
-					w.Wait()
+						w.Wait()
 
-					_ = s.serverConn.Close()
+						_ = s.serverConn.Close()
 
-					s.serverConn = s.tempServerConn
-					s.tempServerConn = nil
-					s.serverMu.Unlock()
+						s.serverConn = s.tempServerConn
+						s.tempServerConn = nil
+						s.serverMu.Unlock()
 
-					s.updateTranslatorData(gameData)
+						s.updateTranslatorData(gameData)
 
-					logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
-					continue
+						s.postTransfer.Store(true)
+
+						logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
+						continue
+					} else if s.postTransfer.CAS(true, false) {
+						continue
+					}
 				}
 			case *packet.Text:
 				pk.XUID = ""

@@ -2,13 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/resource"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"time"
@@ -47,15 +45,9 @@ type config struct {
 	} `json:"logger"`
 }
 
-func init() {
-	if err := Load(); err != nil {
-		log.Printf("Unable to load config: %v\n", err)
-	}
-}
-
-// Load attempts to load the configuration from the config.json file. If the file does not exist, it will be
+// Load attempts to load the configuration from the file located in configPath. If the file does not exist, it will be
 // created with default data. An error is returned if one occurs during the process.
-func Load() error {
+func Load(configPath string) error {
 	c := config{}
 	c.Query.MOTD = "Portal"
 	c.Proxy.BindAddress = "0.0.0.0:19132"
@@ -70,10 +62,6 @@ func Load() error {
 	c.PlayerLatency.UpdateInterval = 5
 	c.Socket.BindAddress = "127.0.0.1:19131"
 	c.Logger.File = "proxy.log"
-
-	var configPath string
-	flag.StringVar(&configPath, "config", "config.json", "Path to the config file.")
-	flag.Parse()
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		data, err := json.MarshalIndent(c, "", "    ")

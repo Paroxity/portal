@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft/resource"
@@ -70,16 +71,20 @@ func Load() error {
 	c.Socket.BindAddress = "127.0.0.1:19131"
 	c.Logger.File = "proxy.log"
 
-	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.json", "Path to the config file.")
+	flag.Parse()
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		data, err := json.MarshalIndent(c, "", "    ")
 		if err != nil {
 			return fmt.Errorf("failed encoding default config: %v", err)
 		}
-		if err := ioutil.WriteFile("config.json", data, 0644); err != nil {
+		if err := ioutil.WriteFile(configPath, data, 0644); err != nil {
 			return fmt.Errorf("failed creating config: %v", err)
 		}
 	} else {
-		data, err := ioutil.ReadFile("config.json")
+		data, err := ioutil.ReadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("error reading config: %v", err)
 		}

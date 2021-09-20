@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/paroxity/portal/config"
 	"github.com/paroxity/portal/logger"
 	"github.com/paroxity/portal/query"
@@ -13,6 +15,13 @@ import (
 )
 
 func main() {
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.json", "Path to the config file.")
+	flag.Parse()
+
+	if err := config.Load(configPath); err != nil {
+		fmt.Printf("Unable to load config: %v", err)
+	}
 	log, err := logger.New(config.LogFile())
 	if err != nil {
 		panic(err)

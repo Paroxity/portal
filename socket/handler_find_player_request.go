@@ -9,7 +9,7 @@ import (
 type FindPlayerRequestHandler struct{}
 
 // Handle ...
-func (*FindPlayerRequestHandler) Handle(p packet.Packet, c *Client) error {
+func (*FindPlayerRequestHandler) Handle(p packet.Packet, _ Server, c *Client) error {
 	pk := p.(*packet.FindPlayerRequest)
 	s, ok := session.Lookup(pk.PlayerUUID)
 	if !ok {
@@ -27,7 +27,6 @@ func (*FindPlayerRequestHandler) Handle(p packet.Packet, c *Client) error {
 		PlayerUUID: s.UUID(),
 		PlayerName: s.Conn().IdentityData().DisplayName,
 		Online:     true,
-		Group:      s.Server().Group(),
 		Server:     s.Server().Name(),
 	})
 }

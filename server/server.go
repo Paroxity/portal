@@ -7,7 +7,6 @@ import (
 // Server represents a server connected to the proxy which players can join and play on.
 type Server struct {
 	name    string
-	group   string
 	address string
 
 	connection Client
@@ -16,10 +15,9 @@ type Server struct {
 }
 
 // New creates a new Server with the provided name, group and address.
-func New(name, group, address string) *Server {
+func New(name, address string) *Server {
 	s := &Server{
 		name:    name,
-		group:   group,
 		address: address,
 	}
 
@@ -29,11 +27,6 @@ func New(name, group, address string) *Server {
 // Name returns the name the server was registered with.
 func (s *Server) Name() string {
 	return s.name
-}
-
-// Group returns the name of the group the server was registered with.
-func (s *Server) Group() string {
-	return s.group
 }
 
 // Address returns the IP address the server was registered with. This should also contain the port separated

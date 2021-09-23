@@ -2,13 +2,10 @@ package server
 
 import (
 	"github.com/paroxity/portal/socket/packet"
-	"io"
 )
 
 // Client represents a client connected over the TCP socket system.
 type Client interface {
-	io.Closer
-
 	// Name returns the name of the Client. This must be unique for all clients as it is used for
 	// identification by the proxy and other clients.
 	Name() string
@@ -18,4 +15,7 @@ type Client interface {
 	// WritePacket writes a packet to the Client. It returns an error in case one occurred whilst writing the
 	// packet.
 	WritePacket(pk packet.Packet) error
+	// Close is called when the client is disconnected from the socket server. The registry is provided in
+	// case it needs to remove any servers etc.
+	Close(registry Registry) error
 }

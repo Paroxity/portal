@@ -9,8 +9,6 @@ import (
 type TransferRequest struct {
 	// PlayerUUID is the UUID of the player to be transferred.
 	PlayerUUID uuid.UUID
-	// Group is the name of the group to transfer the player to.
-	Group string
 	// Server is the name of the server in the group to transfer to.
 	Server string
 }
@@ -23,13 +21,11 @@ func (*TransferRequest) ID() uint16 {
 // Marshal ...
 func (pk *TransferRequest) Marshal(w *protocol.Writer) {
 	w.UUID(&pk.PlayerUUID)
-	w.String(&pk.Group)
 	w.String(&pk.Server)
 }
 
 // Unmarshal ...
 func (pk *TransferRequest) Unmarshal(r *protocol.Reader) {
 	r.UUID(&pk.PlayerUUID)
-	r.String(&pk.Group)
 	r.String(&pk.Server)
 }

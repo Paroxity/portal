@@ -15,8 +15,6 @@ type ServerListResponse struct {
 type ServerEntry struct {
 	// Name is name of the server.
 	Name string
-	// Group is group of the server.
-	Group string
 	// Online returns if the server is connected to the TCP socket server or not.
 	Online bool
 	// PlayerCount returns player count of the server.
@@ -35,7 +33,6 @@ func (pk *ServerListResponse) Marshal(w *protocol.Writer) {
 
 	for _, s := range pk.Servers {
 		w.String(&s.Name)
-		w.String(&s.Group)
 		w.Bool(&s.Online)
 		w.Int64(&s.PlayerCount)
 	}
@@ -49,9 +46,7 @@ func (pk *ServerListResponse) Unmarshal(r *protocol.Reader) {
 	pk.Servers = make([]ServerEntry, l)
 	for i := uint32(0); i < l; i++ {
 		r.String(&pk.Servers[i].Name)
-		r.String(&pk.Servers[i].Group)
 		r.Bool(&pk.Servers[i].Online)
 		r.Int64(&pk.Servers[i].PlayerCount)
 	}
 }
-

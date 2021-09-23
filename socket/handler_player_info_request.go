@@ -9,7 +9,7 @@ import (
 type PlayerInfoRequestHandler struct{}
 
 // Handle ...
-func (*PlayerInfoRequestHandler) Handle(p packet.Packet, c *Client) error {
+func (*PlayerInfoRequestHandler) Handle(p packet.Packet, _ Server, c *Client) error {
 	pk := p.(*packet.PlayerInfoRequest)
 	response := func(status byte, xuid string, address string) error {
 		return c.WritePacket(&packet.PlayerInfoResponse{

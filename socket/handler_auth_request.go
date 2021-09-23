@@ -2,11 +2,9 @@ package socket
 
 import (
 	"bytes"
-	"github.com/paroxity/portal/config"
 	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/sirupsen/logrus"
 	_ "unsafe"
 )
 
@@ -14,11 +12,11 @@ import (
 type AuthRequestHandler struct{}
 
 // Handle ...
-func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
+func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {
 	pk := p.(*packet.AuthRequest)
 
-	if pk.Secret != config.SocketSecret() {
-		logrus.Errorf("Failed socket authentication attempt from \"%s\": Incorrect secret provided", pk.Name)
+	if pk.Secret != srv.Secret() {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": incorrect secret provided", pk.Name)
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseIncorrectSecret})
 	}
 
@@ -26,36 +24,27 @@ func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
 	r := protocol.NewReader(data, 0)
 	switch pk.Type {
 	case packet.ClientTypeServer:
-		var group, address string
-		r.String(&group)
+		var address string
 		r.String(&address)
 
-		g, ok := server.GroupFromName(group)
+		s, ok := srv.ServerRegistry().Server(pk.Name)
 		if !ok {
-			logrus.Errorf("Failed socket authentication attempt from \"%s\": Group \"%s\" not found", pk.Name, group)
-			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
-		}
-
-		s, ok := g.Server(pk.Name)
-		if !ok {
-			s = server.New(pk.Name, g.Name(), address)
-			g.AddServer(s)
+			s = server.New(pk.Name, address)
 		} else if s.Connected() {
-			logrus.Errorf("Failed socket authentication attempt from \"%s\": Server is already connected\n", pk.Name)
+			srv.Logger().Errorf("failed socket authentication attempt from \"%s\": server is already connected", pk.Name)
 			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
 		}
 
 		c.name = pk.Name
 		c.clientType = pk.Type
 		c.extraData["address"] = address
-		c.extraData["group"] = g.Name()
 
 		server_setConn(s, c)
 	default:
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnknownType})
 	}
 
-	logrus.Infof("Socket connection \"%s\" successfully authenticated\n", pk.Name)
+	srv.Logger().Infof("socket connection \"%s\" successfully authenticated", pk.Name)
 	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
 }
 

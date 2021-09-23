@@ -14,8 +14,6 @@ type FindPlayerResponse struct {
 	PlayerName string
 	// Online is if the player is connected to the proxy.
 	Online bool
-	// Group is the group the player is in, if connected.
-	Group string
 	// Server is the server within the group the player is in, if connected.
 	Server string
 }
@@ -31,7 +29,6 @@ func (pk *FindPlayerResponse) Marshal(w *protocol.Writer) {
 	w.String(&pk.PlayerName)
 	w.Bool(&pk.Online)
 	if pk.Online {
-		w.String(&pk.Group)
 		w.String(&pk.Server)
 	}
 }
@@ -42,7 +39,6 @@ func (pk *FindPlayerResponse) Unmarshal(r *protocol.Reader) {
 	r.String(&pk.PlayerName)
 	r.Bool(&pk.Online)
 	if pk.Online {
-		r.String(&pk.Group)
 		r.String(&pk.Server)
 	}
 }

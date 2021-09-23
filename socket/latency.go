@@ -8,6 +8,7 @@ import (
 )
 
 // ReportPlayerLatency sends the latency of each player to their connected server at the interval provided.
+// TODO: Redesign latency reporting to become more modular.
 func ReportPlayerLatency(interval time.Duration) {
 	for {
 		for _, s := range session.All() {

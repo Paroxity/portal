@@ -7,7 +7,7 @@ import (
 // PacketHandler represents a type which handles a specific packet coming from a client.
 type PacketHandler interface {
 	// Handle is responsible for handling an incoming packet for the client.
-	Handle(p packet.Packet, c *Client) error
+	Handle(p packet.Packet, src Server, c *Client) error
 }
 
 var handlers = make(map[uint16]PacketHandler)

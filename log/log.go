@@ -1,4 +1,4 @@
-package logger
+package log
 
 import (
 	"github.com/mattn/go-colorable"
@@ -16,16 +16,6 @@ type Logger struct {
 	stdout io.Writer
 }
 
-// Write ...
-func (l *Logger) Write(p []byte) (int, error) {
-	if n, err := l.stdout.Write(p); err != nil {
-		return n, err
-	}
-
-	cleaned := cleaner.ReplaceAllString(string(p), "")
-	return l.file.WriteString(time.Now().Format("2006-1-2") + " " + cleaned)
-}
-
 // New creates a new logger to be used with any log package. It is designed to write to a log file as well as
 // stdout to allow you to store logs from the proxy.
 func New(path string) (*Logger, error) {
@@ -38,4 +28,14 @@ func New(path string) (*Logger, error) {
 		file:   f,
 		stdout: colorable.NewColorableStdout(),
 	}, nil
+}
+
+// Write ...
+func (l *Logger) Write(p []byte) (int, error) {
+	if n, err := l.stdout.Write(p); err != nil {
+		return n, err
+	}
+
+	cleaned := cleaner.ReplaceAllString(string(p), "")
+	return l.file.WriteString(time.Now().Format("2006-1-2") + " " + cleaned)
 }

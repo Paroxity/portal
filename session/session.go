@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/paroxity/portal/event"
-	"github.com/paroxity/portal/query"
+	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
@@ -13,7 +13,6 @@ import (
 	"github.com/scylladb/go-set/i32set"
 	"github.com/scylladb/go-set/i64set"
 	"github.com/scylladb/go-set/strset"
-	"github.com/sirupsen/logrus"
 	"go.uber.org/atomic"
 	"strings"
 	"sync"
@@ -30,6 +29,7 @@ var (
 type Session struct {
 	*translator
 
+	log  internal.Logger
 	conn *minecraft.Conn
 
 	hMutex sync.RWMutex
@@ -83,8 +83,9 @@ func LookupByName(name string) (*Session, bool) {
 }
 
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn) (_ *Session, err error) {
+func New(conn *minecraft.Conn, loadBalancer LoadBalancer, log internal.Logger) (_ *Session, err error) {
 	s := &Session{
+		log:  log,
 		conn: conn,
 
 		entities:    i64set.New(),
@@ -106,29 +107,27 @@ func New(conn *minecraft.Conn) (_ *Session, err error) {
 		}
 	}()
 
-	srv := LoadBalancer()(s)
+	srv := loadBalancer.FindServer(s)
 	if srv == nil {
-		return nil, errors.New("load balancer did not return a server for the player to join")
+		return s, errors.New("load balancer did not return a server for the player to join")
 	}
 	s.server = srv
 
 	srvConn, err := s.dial(srv)
 	if err != nil {
-		return nil, err
+		return s, err
 	}
 
 	s.serverConn = srvConn
 	if err = s.login(); err != nil {
 		_ = srvConn.Close()
 
-		return nil, err
+		return s, err
 	}
 
 	s.translator = newTranslator(conn.GameData())
 
 	handlePackets(s)
-	srv.IncrementPlayerCount()
-	query.IncrementPlayerCount()
 	return s, nil
 }
 
@@ -202,7 +201,7 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 		return errors.New("already being transferred")
 	}
 
-	logrus.Infof("Transferring %s to server %s in group %s\n", s.conn.IdentityData().DisplayName, srv.Name(), srv.Group())
+	s.log.Infof("%s is being transferred from %s to %s", s.conn.IdentityData().DisplayName, s.Server().Name(), srv.Name())
 
 	ctx := event.C()
 	s.handler().HandleTransfer(ctx, srv)
@@ -287,8 +286,7 @@ func (s *Session) Close() {
 			_ = s.tempServerConn.Close()
 		}
 
-		s.server.DecrementPlayerCount()
-		query.DecrementPlayerCount()
+		s.Server().DecrementPlayerCount()
 	})
 }
 

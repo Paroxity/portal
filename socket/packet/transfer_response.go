@@ -7,7 +7,6 @@ import (
 
 const (
 	TransferResponseSuccess byte = iota
-	TransferResponseGroupNotFound
 	TransferResponseServerNotFound
 	TransferResponseAlreadyOnServer
 	TransferResponsePlayerNotFound

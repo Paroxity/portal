@@ -6,8 +6,10 @@ import (
 	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/session"
 	"github.com/sandertv/gophertunnel/minecraft"
+	"github.com/sirupsen/logrus"
 )
 
+// Portal represents the proxy and controls its functionality.
 type Portal struct {
 	log internal.Logger
 
@@ -15,13 +17,46 @@ type Portal struct {
 	listenConfig minecraft.ListenConfig
 	listener     *minecraft.Listener
 
+	sessionStore   session.Store
 	serverRegistry server.Registry
 	loadBalancer   session.LoadBalancer
+}
+
+// New instantiates portal using the provided options and returns it. If some options are not set, default
+// values will be used in replacement.
+func New(opts Options) *Portal {
+	if opts.Logger == nil {
+		opts.Logger = logrus.New()
+	}
+	if opts.SessionStore == nil {
+		opts.SessionStore = session.NewDefaultStore()
+	}
+	if opts.ServerRegistry == nil {
+		opts.ServerRegistry = server.NewDefaultRegistry()
+	}
+	if opts.LoadBalancer == nil {
+		opts.LoadBalancer = session.NewSplitLoadBalancer(opts.ServerRegistry)
+	}
+	return &Portal{
+		log: opts.Logger,
+
+		address:      opts.Address,
+		listenConfig: opts.ListenConfig,
+
+		sessionStore:   opts.SessionStore,
+		serverRegistry: opts.ServerRegistry,
+		loadBalancer:   opts.LoadBalancer,
+	}
 }
 
 // Logger returns the global logger used by the proxy.
 func (p *Portal) Logger() internal.Logger {
 	return p.log
+}
+
+// SessionStore returns the session store provided to portal. It is used to store all of the open sessions.
+func (p *Portal) SessionStore() session.Store {
+	return p.sessionStore
 }
 
 // ServerRegistry returns the server registry provided to portal. It is used to store the available servers.
@@ -50,7 +85,7 @@ func (p *Portal) Accept() (*session.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return session.New(conn.(*minecraft.Conn), p.loadBalancer, p.log)
+	return session.New(conn.(*minecraft.Conn), p.sessionStore, p.loadBalancer, p.log)
 }
 
 // Disconnect disconnects a Minecraft Conn passed by first sending a disconnect with the message passed, and

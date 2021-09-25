@@ -19,29 +19,11 @@ type Options struct {
 	// and add resource packs etc.
 	ListenConfig minecraft.ListenConfig
 
+	// SessionStore is the store that holds all of the open sessions on the proxy.
+	SessionStore session.Store
 	// ServerRegistry is the registry that stores all of the available servers on the proxy.
 	ServerRegistry server.Registry
 	// LoadBalancer is the method used to balance load across the servers on the proxy. It can be used to
 	// change which servers players connect to when they join the proxy.
 	LoadBalancer session.LoadBalancer
-}
-
-// Portal instantiates portal using the set options and returns it. If some options are not set, default
-// values will be used in replacement.
-func (opts Options) Portal() *Portal {
-	if opts.ServerRegistry == nil {
-		opts.ServerRegistry = server.NewDefaultRegistry()
-	}
-	if opts.LoadBalancer == nil {
-		opts.LoadBalancer = session.NewSplitLoadBalancer(opts.ServerRegistry)
-	}
-	return &Portal{
-		log: opts.Logger,
-
-		address:      opts.Address,
-		listenConfig: opts.ListenConfig,
-
-		serverRegistry: opts.ServerRegistry,
-		loadBalancer:   opts.LoadBalancer,
-	}
 }

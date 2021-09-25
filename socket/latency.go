@@ -1,17 +1,16 @@
 package socket
 
 import (
+	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket/packet"
-	"github.com/sirupsen/logrus"
 	"time"
 )
 
 // ReportPlayerLatency sends the latency of each player to their connected server at the interval provided.
-// TODO: Redesign latency reporting to become more modular.
-func ReportPlayerLatency(interval time.Duration) {
+func (s *DefaultServer) ReportPlayerLatency(store session.Store, log internal.Logger, interval time.Duration) {
 	for {
-		for _, s := range session.All() {
+		for _, s := range store.All() {
 			srv := s.Server()
 			if srv == nil || !srv.Connected() {
 				continue
@@ -20,7 +19,7 @@ func ReportPlayerLatency(interval time.Duration) {
 				PlayerUUID: s.UUID(),
 				Latency:    s.Conn().Latency().Milliseconds(),
 			}); err != nil {
-				logrus.Error(err)
+				log.Errorf("failed to send packet: %v", err)
 			}
 		}
 		time.Sleep(interval)

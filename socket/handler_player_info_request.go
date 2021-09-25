@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket/packet"
 )
 
@@ -9,7 +8,7 @@ import (
 type PlayerInfoRequestHandler struct{}
 
 // Handle ...
-func (*PlayerInfoRequestHandler) Handle(p packet.Packet, _ Server, c *Client) error {
+func (*PlayerInfoRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {
 	pk := p.(*packet.PlayerInfoRequest)
 	response := func(status byte, xuid string, address string) error {
 		return c.WritePacket(&packet.PlayerInfoResponse{
@@ -20,7 +19,7 @@ func (*PlayerInfoRequestHandler) Handle(p packet.Packet, _ Server, c *Client) er
 		})
 	}
 
-	s, ok := session.Lookup(pk.PlayerUUID)
+	s, ok := srv.SessionStore().Load(pk.PlayerUUID)
 	if !ok {
 		return response(packet.PlayerInfoResponsePlayerNotFound, "", "")
 	}

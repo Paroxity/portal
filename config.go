@@ -27,6 +27,13 @@ type Config struct {
 		// Level is the required level logs should have to be shown in console or in the file above.
 		Level string
 	}
+	// PlayerLatency holds settings related to the latency reporting aspects of the proxy.
+	PlayerLatency struct {
+		// Report is if the proxy should send the proxy of a player to their server at a regular interval.
+		Report bool
+		// UpdateInterval is the interval to report a player's ping if Report is true.
+		UpdateInterval int
+	}
 }
 
 // DefaultConfig returns a configuration with the default values filled out.
@@ -35,5 +42,7 @@ func DefaultConfig() (c Config) {
 	c.Network.Communication.Address = ":19131"
 	c.Logger.File = "proxy.log"
 	c.Logger.Level = "debug"
+	c.PlayerLatency.Report = true
+	c.PlayerLatency.UpdateInterval = 5
 	return
 }

@@ -19,8 +19,8 @@ type Registry interface {
 
 // DefaultRegistry represents a server registry with basic behaviour.
 type DefaultRegistry struct {
-	servers map[string]*Server
 	mu      sync.Mutex
+	servers map[string]*Server
 }
 
 // NewDefaultRegistry creates a new DefaultRegistry and returns it.

@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket/packet"
 )
 
@@ -24,7 +23,7 @@ func (*TransferRequestHandler) Handle(p packet.Packet, srv Server, c *Client) er
 		return response(packet.TransferResponseServerNotFound, "")
 	}
 
-	s, ok := session.Lookup(pk.PlayerUUID)
+	s, ok := srv.SessionStore().Load(pk.PlayerUUID)
 	if !ok {
 		return response(packet.TransferResponsePlayerNotFound, "")
 	}

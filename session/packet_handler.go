@@ -29,7 +29,7 @@ func handlePackets(s *Session) {
 				pk.XUID = ""
 			case *packet.PlayerAction:
 				if pk.ActionType == protocol.PlayerActionDimensionChangeDone {
-					if s.transferring.CAS(true, false) {
+					if s.transferring.Load() == true {
 						s.serverMu.Lock()
 						gameData := s.tempServerConn.GameData()
 						_ = s.conn.WritePacket(&packet.ChangeDimension{
@@ -76,6 +76,7 @@ func handlePackets(s *Session) {
 
 						s.updateTranslatorData(gameData)
 
+						s.transferring.Store(false)
 						s.postTransfer.Store(true)
 
 						logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
@@ -102,7 +103,6 @@ func handlePackets(s *Session) {
 	}()
 
 	go func() {
-		defer s.Close()
 		for {
 			conn := s.ServerConn()
 			pk, err := conn.ReadPacket()
@@ -110,12 +110,23 @@ func handlePackets(s *Session) {
 				if conn != s.ServerConn() {
 					continue
 				}
-				if disconnect, ok := errors.Unwrap(err).(minecraft.DisconnectError); ok {
-					logrus.Debugln(disconnect.Error())
-					_ = s.conn.WritePacket(&packet.Disconnect{Message: disconnect.Error()})
+				ctx := event.C()
+				s.handler().HandleServerDisconnect(ctx)
+
+				c := false
+				ctx.Continue(func() {
+					c = true
+					if disconnect, ok := errors.Unwrap(err).(minecraft.DisconnectError); ok {
+						logrus.Debugln(disconnect.Error())
+						_ = s.conn.WritePacket(&packet.Disconnect{Message: disconnect.Error()})
+					}
+					log.Println(err)
+					s.Close()
+				})
+				if c {
+					return
 				}
-				log.Println(err)
-				return
+				continue
 			}
 			s.translatePacket(pk)
 

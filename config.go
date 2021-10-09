@@ -33,7 +33,7 @@ type Config struct {
 		Report bool `json:"report"`
 		// UpdateInterval is the interval to report a player's ping if Report is true.
 		UpdateInterval int `json:"update_interval"`
-	}
+	} `json:"player_latency"`
 }
 
 // DefaultConfig returns a configuration with the default values filled out.

@@ -29,7 +29,7 @@ func handlePackets(s *Session) {
 				pk.XUID = ""
 			case *packet.PlayerAction:
 				if pk.ActionType == protocol.PlayerActionDimensionChangeDone {
-					if s.transferring.Load() == true {
+					if s.transferring.Load() {
 						s.serverMu.Lock()
 						gameData := s.tempServerConn.GameData()
 						_ = s.conn.WritePacket(&packet.ChangeDimension{
@@ -120,7 +120,6 @@ func handlePackets(s *Session) {
 						logrus.Debugln(disconnect.Error())
 						_ = s.conn.WritePacket(&packet.Disconnect{Message: disconnect.Error()})
 					}
-					log.Println(err)
 					s.Close()
 				})
 				if c {

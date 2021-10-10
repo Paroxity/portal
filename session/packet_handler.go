@@ -7,7 +7,6 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
-	"log"
 	"sync"
 )
 

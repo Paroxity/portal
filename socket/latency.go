@@ -8,7 +8,7 @@ import (
 )
 
 // ReportPlayerLatency sends the latency of each player to their connected server at the interval provided.
-func (s *DefaultServer) ReportPlayerLatency(store session.Store, log internal.Logger, interval time.Duration) {
+func (s *DefaultServer) ReportPlayerLatency(store *session.Store, log internal.Logger, interval time.Duration) {
 	for {
 		for _, s := range store.All() {
 			srv := s.Server()

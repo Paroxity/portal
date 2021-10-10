@@ -79,7 +79,7 @@ func handlePackets(s *Session) {
 						s.transferring.Store(false)
 						s.postTransfer.Store(true)
 
-						s.log.Infof("%s finished transferring to %s", s.Server().Name())
+						s.log.Infof("%s finished transferring to %s", s.Conn().IdentityData().DisplayName, s.Server().Name())
 						continue
 					} else if s.postTransfer.CAS(true, false) {
 						continue

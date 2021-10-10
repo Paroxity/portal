@@ -19,9 +19,9 @@ type Server interface {
 	Secret() string
 
 	// SessionStore returns the store used to hold the open sessions on the proxy.
-	SessionStore() session.Store
+	SessionStore() *session.Store
 	// ServerRegistry returns the registry used to store available servers on the proxy.
-	ServerRegistry() server.Registry
+	ServerRegistry() *server.Registry
 }
 
 // DefaultServer represents a basic TCP socket server implementation. It allows external connections to
@@ -33,12 +33,12 @@ type DefaultServer struct {
 	secret   string
 	listener net.Listener
 
-	sessionStore   session.Store
-	serverRegistry server.Registry
+	sessionStore   *session.Store
+	serverRegistry *server.Registry
 }
 
 // NewDefaultServer creates a new default server to be used for accepting socket connections.
-func NewDefaultServer(addr, secret string, sessionStore session.Store, serverRegistry server.Registry, log internal.Logger) *DefaultServer {
+func NewDefaultServer(addr, secret string, sessionStore *session.Store, serverRegistry *server.Registry, log internal.Logger) *DefaultServer {
 	return &DefaultServer{
 		log: log,
 
@@ -59,16 +59,19 @@ func (s *DefaultServer) Listen() error {
 	s.log.Infof("socket server listening on %s\n", s.addr)
 	s.listener = listener
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			s.log.Infof("socket server unable to accept connection: %v", err)
-			continue
-		}
-		s.log.Debugf("socket server accepted a new connection")
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				s.log.Infof("socket server unable to accept connection: %v", err)
+				continue
+			}
+			s.log.Debugf("socket server accepted a new connection")
 
-		go s.handleClient(NewClient(conn, s.log))
-	}
+			go s.handleClient(NewClient(conn, s.log))
+		}
+	}()
+	return nil
 }
 
 // handleClient handles a client that has been accepted from the server.
@@ -111,12 +114,12 @@ func (s *DefaultServer) Secret() string {
 }
 
 // SessionStore ...
-func (s *DefaultServer) SessionStore() session.Store {
+func (s *DefaultServer) SessionStore() *session.Store {
 	return s.sessionStore
 }
 
 // ServerRegistry ...
-func (s *DefaultServer) ServerRegistry() server.Registry {
+func (s *DefaultServer) ServerRegistry() *server.Registry {
 	return s.serverRegistry
 }
 

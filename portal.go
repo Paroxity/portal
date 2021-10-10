@@ -17,8 +17,8 @@ type Portal struct {
 	listenConfig minecraft.ListenConfig
 	listener     *minecraft.Listener
 
-	sessionStore   session.Store
-	serverRegistry server.Registry
+	sessionStore   *session.Store
+	serverRegistry *server.Registry
 	loadBalancer   session.LoadBalancer
 }
 
@@ -28,14 +28,9 @@ func New(opts Options) *Portal {
 	if opts.Logger == nil {
 		opts.Logger = logrus.New()
 	}
-	if opts.SessionStore == nil {
-		opts.SessionStore = session.NewDefaultStore()
-	}
-	if opts.ServerRegistry == nil {
-		opts.ServerRegistry = server.NewDefaultRegistry()
-	}
+	serverRegistry := server.NewDefaultRegistry()
 	if opts.LoadBalancer == nil {
-		opts.LoadBalancer = session.NewSplitLoadBalancer(opts.ServerRegistry)
+		opts.LoadBalancer = session.NewSplitLoadBalancer(serverRegistry)
 	}
 	return &Portal{
 		log: opts.Logger,
@@ -43,8 +38,8 @@ func New(opts Options) *Portal {
 		address:      opts.Address,
 		listenConfig: opts.ListenConfig,
 
-		sessionStore:   opts.SessionStore,
-		serverRegistry: opts.ServerRegistry,
+		sessionStore:   session.NewDefaultStore(),
+		serverRegistry: serverRegistry,
 		loadBalancer:   opts.LoadBalancer,
 	}
 }
@@ -55,12 +50,12 @@ func (p *Portal) Logger() internal.Logger {
 }
 
 // SessionStore returns the session store provided to portal. It is used to store all of the open sessions.
-func (p *Portal) SessionStore() session.Store {
+func (p *Portal) SessionStore() *session.Store {
 	return p.sessionStore
 }
 
 // ServerRegistry returns the server registry provided to portal. It is used to store the available servers.
-func (p *Portal) ServerRegistry() server.Registry {
+func (p *Portal) ServerRegistry() *server.Registry {
 	return p.serverRegistry
 }
 
@@ -78,10 +73,12 @@ func (p *Portal) Listen() error {
 // Accept accepts a fully connected (on Minecraft layer) connection which is ready to receive and send
 // packets. If the listener is closed or the player failed to spawn in then an error will be returned.
 func (p *Portal) Accept() (*session.Session, error) {
+	p.Logger().Debugf("waiting to accept...")
 	if p.listener == nil {
 		return nil, fmt.Errorf("no active listener")
 	}
 	conn, err := p.listener.Accept()
+	p.Logger().Debugf("accepted connection")
 	if err != nil {
 		return nil, err
 	}

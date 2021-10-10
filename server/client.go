@@ -17,5 +17,5 @@ type Client interface {
 	WritePacket(pk packet.Packet) error
 	// Close is called when the client is disconnected from the socket server. The registry is provided in
 	// case it needs to remove any servers etc.
-	Close(registry Registry) error
+	Close(registry *Registry) error
 }

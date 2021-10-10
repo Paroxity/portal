@@ -2,7 +2,6 @@ package portal
 
 import (
 	"github.com/paroxity/portal/internal"
-	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/session"
 	"github.com/sandertv/gophertunnel/minecraft"
 )
@@ -19,10 +18,6 @@ type Options struct {
 	// and add resource packs etc.
 	ListenConfig minecraft.ListenConfig
 
-	// SessionStore is the store that holds all of the open sessions on the proxy.
-	SessionStore session.Store
-	// ServerRegistry is the registry that stores all of the available servers on the proxy.
-	ServerRegistry server.Registry
 	// LoadBalancer is the method used to balance load across the servers on the proxy. It can be used to
 	// change which servers players connect to when they join the proxy.
 	LoadBalancer session.LoadBalancer

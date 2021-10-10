@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"github.com/paroxity/portal"
 	portallog "github.com/paroxity/portal/log"
-	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket"
 	"github.com/sandertv/gophertunnel/minecraft"
-	"github.com/sandertv/gophertunnel/minecraft/text"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"log"
@@ -38,7 +36,6 @@ func main() {
 	}
 	logger.SetLevel(level)
 
-	serverRegistry := server.NewDefaultRegistry()
 	p := portal.New(portal.Options{
 		Logger: logger,
 
@@ -51,7 +48,7 @@ func main() {
 		logger.Fatalf("failed to listen on %s: %v", conf.Network.Address, err)
 	}
 
-	socketServer := socket.NewDefaultServer(conf.Network.Communication.Address, conf.Network.Communication.Secret, p.SessionStore(), serverRegistry, logger)
+	socketServer := socket.NewDefaultServer(conf.Network.Communication.Address, conf.Network.Communication.Secret, p.SessionStore(), p.ServerRegistry(), logger)
 	if err := socketServer.Listen(); err != nil {
 		p.Logger().Fatalf("socket server failed to listen: %v", err)
 	}
@@ -62,8 +59,7 @@ func main() {
 	for {
 		s, err := p.Accept()
 		if err != nil {
-			p.Logger().Errorf("failed to accept connection for %s: %v", s.Conn().IdentityData().DisplayName, err)
-			_ = p.Disconnect(s.Conn(), text.Colourf("<red>%v</red>", err))
+			p.Logger().Errorf("failed to accept connection: %v", err)
 			continue
 		}
 		p.Logger().Infof("%s has been connected to server %s", s.Conn().IdentityData().DisplayName, s.Server().Name())

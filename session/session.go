@@ -28,7 +28,7 @@ type Session struct {
 
 	log   internal.Logger
 	conn  *minecraft.Conn
-	store Store
+	store *Store
 
 	hMutex sync.RWMutex
 	// h holds the current handler of the session.
@@ -53,7 +53,7 @@ type Session struct {
 }
 
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn, store Store, loadBalancer LoadBalancer, log internal.Logger) (_ *Session, err error) {
+func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log internal.Logger) (_ *Session, err error) {
 	s := &Session{
 		log:   log,
 		conn:  conn,

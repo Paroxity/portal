@@ -49,7 +49,7 @@ func (c *Client) Name() string {
 }
 
 // Close closes the client and related connections.
-func (c *Client) Close(registry server.Registry) error {
+func (c *Client) Close(registry *server.Registry) error {
 	c.log.Debugf("Socket connection \"%s\" closed", c.name)
 
 	switch c.clientType {

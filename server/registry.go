@@ -5,31 +5,19 @@ import (
 	"sync"
 )
 
-// Registry represents a register which stores the servers available on the proxy.
-type Registry interface {
-	// Server attempts to find a server from its name, and returns the server and if it was found or not.
-	Server(name string) (*Server, bool)
-	// Servers returns a slice of all of the available servers on the proxy.
-	Servers() []*Server
-	// AddServer attempts to add a server to the register.
-	AddServer(srv *Server)
-	// RemoveServer attempts to remove a server from the register.
-	RemoveServer(srv *Server)
-}
-
-// DefaultRegistry represents a server registry with basic behaviour.
-type DefaultRegistry struct {
+// Registry represents a registry which stores the severs registered on the proxy.
+type Registry struct {
 	mu      sync.Mutex
 	servers map[string]*Server
 }
 
-// NewDefaultRegistry creates a new DefaultRegistry and returns it.
-func NewDefaultRegistry() *DefaultRegistry {
-	return &DefaultRegistry{servers: make(map[string]*Server)}
+// NewDefaultRegistry creates a new Registry and returns it.
+func NewDefaultRegistry() *Registry {
+	return &Registry{servers: make(map[string]*Server)}
 }
 
-// Server ...
-func (r *DefaultRegistry) Server(name string) (*Server, bool) {
+// Server attempts to find a server from its name, and returns the server and if it was found or not.
+func (r *Registry) Server(name string) (*Server, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -37,8 +25,8 @@ func (r *DefaultRegistry) Server(name string) (*Server, bool) {
 	return srv, ok
 }
 
-// Servers ...
-func (r *DefaultRegistry) Servers() (all []*Server) {
+// Servers returns a slice of all of the available servers on the proxy.
+func (r *Registry) Servers() (all []*Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -48,16 +36,16 @@ func (r *DefaultRegistry) Servers() (all []*Server) {
 	return
 }
 
-// AddServer ...
-func (r *DefaultRegistry) AddServer(srv *Server) {
+// AddServer attempts to add a server to the register.
+func (r *Registry) AddServer(srv *Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.servers[strings.ToLower(srv.Name())] = srv
 }
 
-// RemoveServer ...
-func (r *DefaultRegistry) RemoveServer(srv *Server) {
+// // RemoveServer attempts to remove a server from the register.
+func (r *Registry) RemoveServer(srv *Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

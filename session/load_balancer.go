@@ -1,6 +1,8 @@
 package session
 
-import "github.com/paroxity/portal/server"
+import (
+	"github.com/paroxity/portal/server"
+)
 
 // LoadBalancer represents a load balancer which helps balance the load of players on the proxy.
 type LoadBalancer interface {
@@ -11,11 +13,11 @@ type LoadBalancer interface {
 
 // SplitLoadBalancer attempts to split players evenly across all of the servers.
 type SplitLoadBalancer struct {
-	registry server.Registry
+	registry *server.Registry
 }
 
 // NewSplitLoadBalancer creates a "split" load balancer with the provided server registry.
-func NewSplitLoadBalancer(registry server.Registry) *SplitLoadBalancer {
+func NewSplitLoadBalancer(registry *server.Registry) *SplitLoadBalancer {
 	return &SplitLoadBalancer{registry: registry}
 }
 

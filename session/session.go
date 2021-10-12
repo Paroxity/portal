@@ -97,6 +97,7 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 	s.translator = newTranslator(conn.GameData())
 
 	handlePackets(s)
+	srv.IncrementPlayerCount()
 	return s, nil
 }
 

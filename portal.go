@@ -20,6 +20,7 @@ type Portal struct {
 	sessionStore   *session.Store
 	serverRegistry *server.Registry
 	loadBalancer   session.LoadBalancer
+	whitelist      session.Whitelist
 }
 
 // New instantiates portal using the provided options and returns it. If some options are not set, default
@@ -32,6 +33,9 @@ func New(opts Options) *Portal {
 	if opts.LoadBalancer == nil {
 		opts.LoadBalancer = session.NewSplitLoadBalancer(serverRegistry)
 	}
+	if opts.Whitelist == nil {
+		opts.Whitelist = session.NewSimpleWhitelist(false, []string{})
+	}
 	return &Portal{
 		log: opts.Logger,
 
@@ -41,6 +45,7 @@ func New(opts Options) *Portal {
 		sessionStore:   session.NewDefaultStore(),
 		serverRegistry: serverRegistry,
 		loadBalancer:   opts.LoadBalancer,
+		whitelist:      opts.Whitelist,
 	}
 }
 
@@ -82,7 +87,12 @@ func (p *Portal) Accept() (*session.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return session.New(conn.(*minecraft.Conn), p.sessionStore, p.loadBalancer, p.log)
+	c := conn.(*minecraft.Conn)
+	if ok, m := p.whitelist.Authorize(c); !ok {
+		_ = p.Disconnect(c, m)
+		return nil, fmt.Errorf("player is not whitelisted: %s", m)
+	}
+	return session.New(c, p.sessionStore, p.loadBalancer, p.log)
 }
 
 // Disconnect disconnects a Minecraft Conn passed by first sending a disconnect with the message passed, and

@@ -30,6 +30,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error 
 		s, ok := srv.ServerRegistry().Server(pk.Name)
 		if !ok {
 			s = server.New(pk.Name, address)
+			srv.ServerRegistry().AddServer(s)
 		} else if s.Connected() {
 			srv.Logger().Errorf("failed socket authentication attempt from \"%s\": server is already connected", pk.Name)
 			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})

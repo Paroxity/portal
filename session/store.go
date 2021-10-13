@@ -2,7 +2,6 @@ package session
 
 import (
 	"github.com/google/uuid"
-	"strings"
 	"sync"
 )
 
@@ -46,7 +45,7 @@ func (s *Store) LoadFromName(x string) (*Session, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	v, ok := s.sessionNames[strings.ToLower(x)]
+	v, ok := s.sessionNames[x]
 	return v, ok
 }
 

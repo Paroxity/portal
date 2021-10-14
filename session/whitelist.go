@@ -3,7 +3,6 @@ package session
 import (
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/text"
-	"strings"
 )
 
 // Whitelist handles the players joining the proxy to decide which are allowed join.
@@ -31,7 +30,7 @@ func (s *SimpleWhitelist) Authorize(conn *minecraft.Conn) (bool, string) {
 	}
 	u := conn.IdentityData().DisplayName
 	for _, p := range s.players {
-		if strings.EqualFold(u, p) {
+		if u == p {
 			return true, ""
 		}
 	}

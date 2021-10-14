@@ -25,12 +25,12 @@ func NewSimpleWhitelist(enabled bool, players []string) *SimpleWhitelist {
 }
 
 // Authorize ...
-func (d *SimpleWhitelist) Authorize(conn *minecraft.Conn) (bool, string) {
-	if !d.enabled {
+func (s *SimpleWhitelist) Authorize(conn *minecraft.Conn) (bool, string) {
+	if !s.enabled {
 		return true, ""
 	}
 	u := conn.IdentityData().DisplayName
-	for _, p := range d.players {
+	for _, p := range s.players {
 		if strings.EqualFold(u, p) {
 			return true, ""
 		}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/paroxity/portal"
 	portallog "github.com/paroxity/portal/log"
+	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sirupsen/logrus"
@@ -43,6 +44,8 @@ func main() {
 		ListenConfig: minecraft.ListenConfig{
 			StatusProvider: portal.NewMOTDStatusProvider("Portal"),
 		},
+
+		Whitelist: session.NewSimpleWhitelist(conf.Whitelist.Enabled, conf.Whitelist.Players),
 	})
 	if err := p.Listen(); err != nil {
 		logger.Fatalf("failed to listen on %s: %v", conf.Network.Address, err)

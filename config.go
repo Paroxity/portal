@@ -34,6 +34,13 @@ type Config struct {
 		// UpdateInterval is the interval to report a player's ping if Report is true.
 		UpdateInterval int `json:"update_interval"`
 	} `json:"player_latency"`
+	// Whitelist holds settings related to the proxy whitelist.
+	Whitelist struct {
+		// Enabled is if the whitelist is enabled.
+		Enabled bool `json:"enabled"`
+		// Players is a list of whitelisted players' usernames.
+		Players []string `json:"players"`
+	} `json:"whitelist"`
 }
 
 // DefaultConfig returns a configuration with the default values filled out.

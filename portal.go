@@ -49,12 +49,12 @@ func (p *Portal) Logger() internal.Logger {
 	return p.log
 }
 
-// SessionStore returns the session store provided to portal. It is used to store all of the open sessions.
+// SessionStore returns the session store provided to portal. It is used to store all the open sessions.
 func (p *Portal) SessionStore() *session.Store {
 	return p.sessionStore
 }
 
-// ServerRegistry returns the server registry provided to portal. It is used to store the available servers.
+// ServerRegistry returns the server registry provided to portal. It is used to store all the available servers.
 func (p *Portal) ServerRegistry() *server.Registry {
 	return p.serverRegistry
 }

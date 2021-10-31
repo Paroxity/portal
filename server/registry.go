@@ -25,7 +25,7 @@ func (r *Registry) Server(name string) (*Server, bool) {
 	return srv, ok
 }
 
-// Servers returns a slice of all of the available servers on the proxy.
+// Servers returns a slice of all the available servers on the proxy.
 func (r *Registry) Servers() (all []*Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -36,7 +36,7 @@ func (r *Registry) Servers() (all []*Server) {
 	return
 }
 
-// AddServer attempts to add a server to the register.
+// AddServer adds a server to the register.
 func (r *Registry) AddServer(srv *Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -44,7 +44,7 @@ func (r *Registry) AddServer(srv *Server) {
 	r.servers[strings.ToLower(srv.Name())] = srv
 }
 
-// // RemoveServer attempts to remove a server from the register.
+// RemoveServer removes a server from the register.
 func (r *Registry) RemoveServer(srv *Server) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

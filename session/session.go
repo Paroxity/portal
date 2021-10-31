@@ -296,7 +296,7 @@ func (s *Session) clearEffects() {
 	s.effects.Clear()
 }
 
-// clearBossBars clears all of the boss bars currently visible the client.
+// clearBossBars clears all the boss bars currently visible the client.
 func (s *Session) clearBossBars() {
 	s.bossBars.Each(func(b int64) bool {
 		_ = s.conn.WritePacket(&packet.BossEvent{

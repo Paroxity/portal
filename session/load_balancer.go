@@ -11,7 +11,7 @@ type LoadBalancer interface {
 	FindServer(session *Session) *server.Server
 }
 
-// SplitLoadBalancer attempts to split players evenly across all of the servers.
+// SplitLoadBalancer attempts to split players evenly across all the servers.
 type SplitLoadBalancer struct {
 	registry *server.Registry
 }

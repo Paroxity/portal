@@ -53,7 +53,7 @@ func main() {
 		p.Logger().Fatalf("socket server failed to listen: %v", err)
 	}
 	if conf.PlayerLatency.Report {
-		go socketServer.ReportPlayerLatency(p.SessionStore(), p.Logger(), time.Second*time.Duration(conf.PlayerLatency.UpdateInterval))
+		go socketServer.ReportPlayerLatency(time.Second * time.Duration(conf.PlayerLatency.UpdateInterval))
 	}
 
 	for {

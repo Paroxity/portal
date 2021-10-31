@@ -4,8 +4,10 @@ import (
 	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/session"
+	"github.com/paroxity/portal/socket/packet"
 	"net"
 	"strings"
+	"sync"
 )
 
 type Server interface {
@@ -90,6 +92,11 @@ func (s *DefaultServer) handleClient(c *Client) {
 
 		h, ok := handlers[pk.ID()]
 		if ok {
+			if !c.Authenticated() && h.RequiresAuth() {
+				_ = c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnauthenticated})
+				s.log.Debugf("received %T from unauthenticated client", pk)
+				return
+			}
 			if err := h.Handle(pk, s, c); err != nil {
 				s.log.Errorf("socket server unable to handle packet: %v", err)
 			}

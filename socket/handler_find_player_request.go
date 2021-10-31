@@ -5,7 +5,7 @@ import (
 )
 
 // FindPlayerRequestHandler is responsible for handling the FindPlayerRequest packet sent by servers.
-type FindPlayerRequestHandler struct{}
+type FindPlayerRequestHandler struct{ requireAuth }
 
 // Handle ...
 func (*FindPlayerRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {

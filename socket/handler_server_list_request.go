@@ -5,7 +5,7 @@ import (
 )
 
 // ServerListRequestHandler is responsible for handling the ServerListRequest packet sent by servers.
-type ServerListRequestHandler struct{}
+type ServerListRequestHandler struct{ requireAuth }
 
 // Handle ...
 func (*ServerListRequestHandler) Handle(_ packet.Packet, srv Server, c *Client) error {

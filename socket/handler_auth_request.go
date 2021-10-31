@@ -44,8 +44,14 @@ func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error 
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnknownType})
 	}
 
+	c.Authenticate()
 	srv.Logger().Infof("socket connection \"%s\" successfully authenticated", pk.Name)
 	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
+}
+
+// RequiresAuth ...
+func (*AuthRequestHandler) RequiresAuth() bool {
+	return false
 }
 
 //go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn

@@ -8,6 +8,7 @@ import (
 	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"go.uber.org/atomic"
 	"net"
 	"sync"
 )
@@ -26,6 +27,8 @@ type Client struct {
 	name       string
 	clientType uint8
 	extraData  map[string]interface{}
+
+	authenticated atomic.Bool
 }
 
 // NewClient creates a new socket Client with default allocations and required data. It pre-allocates 4096
@@ -60,6 +63,16 @@ func (c *Client) Close(registry *server.Registry) error {
 	}
 
 	return c.conn.Close()
+}
+
+// Authenticate marks the client as authenticated.
+func (c *Client) Authenticate() {
+	c.authenticated.Store(true)
+}
+
+// Authenticated returns if the client has been authenticated or not.
+func (c *Client) Authenticated() bool {
+	return c.authenticated.Load()
 }
 
 // ReadPacket reads a packet from the connection and returns it. The client is expected to prefix the packet

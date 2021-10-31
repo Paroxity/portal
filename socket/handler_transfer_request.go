@@ -5,7 +5,7 @@ import (
 )
 
 // TransferRequestHandler is responsible for handling the TransferRequest packet sent by servers.
-type TransferRequestHandler struct{}
+type TransferRequestHandler struct{ requireAuth }
 
 // Handle ...
 func (*TransferRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {

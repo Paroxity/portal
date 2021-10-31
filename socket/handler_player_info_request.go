@@ -5,7 +5,7 @@ import (
 )
 
 // PlayerInfoRequestHandler is responsible for handling the PlayerInfoRequest packet sent by servers.
-type PlayerInfoRequestHandler struct{}
+type PlayerInfoRequestHandler struct{ requireAuth }
 
 // Handle ...
 func (*PlayerInfoRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {

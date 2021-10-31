@@ -7,6 +7,7 @@ const (
 	AuthResponseIncorrectSecret
 	AuthResponseUnknownType
 	AuthResponseInvalidData
+	AuthResponseUnauthenticated
 )
 
 // AuthResponse is sent by the proxy in response to AuthRequest. It tells the client if the authentication

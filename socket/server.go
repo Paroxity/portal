@@ -7,7 +7,6 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 	"net"
 	"strings"
-	"sync"
 )
 
 type Server interface {

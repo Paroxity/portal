@@ -8,10 +8,10 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/mattn/go-colorable v0.1.11
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38 // indirect
-	github.com/sandertv/go-raknet v1.10.0 // indirect
-	github.com/sandertv/gophertunnel v1.15.1
+	github.com/sandertv/gophertunnel v1.17.1
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.8.1
+	github.com/yourbasic/radix v0.0.0-20180308122924-cbe1cc82e907 // indirect
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect

@@ -21,4 +21,7 @@ type Options struct {
 	// LoadBalancer is the method used to balance load across the servers on the proxy. It can be used to
 	// change which servers players connect to when they join the proxy.
 	LoadBalancer session.LoadBalancer
+
+	// Whitelist is used to limit the proxy to only allow certain players to join.
+	Whitelist session.Whitelist
 }

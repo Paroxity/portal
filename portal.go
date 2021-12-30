@@ -64,6 +64,16 @@ func (p *Portal) ServerRegistry() *server.Registry {
 	return p.serverRegistry
 }
 
+// LoadBalancer returns the load balancer that handles the server a player joins when they first connect to the proxy.
+func (p *Portal) LoadBalancer() session.LoadBalancer {
+	return p.loadBalancer
+}
+
+// SetLoadBalancer sets the load balancer that handles the server a player joins when they first connect to the proxy.
+func (p *Portal) SetLoadBalancer(loadBalancer session.LoadBalancer) {
+	p.loadBalancer = loadBalancer
+}
+
 // Listen starts to listen on the set address and allows connections from minecraft clients. An error is
 // returned if the listener failed to listen.
 func (p *Portal) Listen() error {

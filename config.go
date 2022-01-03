@@ -1,5 +1,11 @@
 package portal
 
+import (
+	"github.com/sandertv/gophertunnel/minecraft/resource"
+	"os"
+	"path/filepath"
+)
+
 // Config represents the base configuration for portal. It holds settings that affect different aspects of the
 // proxy.
 type Config struct {
@@ -41,6 +47,13 @@ type Config struct {
 		// Players is a list of whitelisted players' usernames.
 		Players []string `json:"players"`
 	} `json:"whitelist"`
+	// ResourcePacks holds settings related to sending resource packs to players.
+	ResourcePacks struct {
+		// Required is if players are required to download the resource packs before connecting.
+		Required bool `json:"force"`
+		// Directory is the directory to load resource packs from. They can be directories, .zip files or .mcpack files.
+		Directory string
+	}
 }
 
 // DefaultConfig returns a configuration with the default values filled out.
@@ -51,5 +64,32 @@ func DefaultConfig() (c Config) {
 	c.Logger.Level = "debug"
 	c.PlayerLatency.Report = true
 	c.PlayerLatency.UpdateInterval = 5
+	c.ResourcePacks.Directory = "resource_packs"
 	return
+}
+
+// LoadResourcePacks attempts to load all the resource packs in the provided directory. If the directory does not exist,
+// it will be created. If any pack fails to compile, the error will be returned.
+func LoadResourcePacks(dir string) ([]*resource.Pack, error) {
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	packs := make([]*resource.Pack, 0, len(files))
+	for _, file := range files {
+		if file.IsDir() {
+			pack, err := resource.Compile(filepath.Join(dir, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			packs = append(packs, pack)
+		}
+	}
+	return packs, nil
 }

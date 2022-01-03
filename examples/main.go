@@ -37,12 +37,20 @@ func main() {
 	}
 	logger.SetLevel(level)
 
+	resourcePacks, err := portal.LoadResourcePacks(conf.ResourcePacks.Directory)
+	if err != nil {
+		logger.Fatalf("unable to load resource packs: %v", err)
+	}
+
 	p := portal.New(portal.Options{
 		Logger: logger,
 
 		Address: conf.Network.Address,
 		ListenConfig: minecraft.ListenConfig{
 			StatusProvider: portal.NewMOTDStatusProvider("Portal"),
+
+			ResourcePacks:        resourcePacks,
+			TexturePacksRequired: conf.ResourcePacks.Required,
 		},
 
 		Whitelist: session.NewSimpleWhitelist(conf.Whitelist.Enabled, conf.Whitelist.Players),

@@ -44,14 +44,25 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.AddActor:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+		pk.EntityMetadata = t.translateEntityMetadata(pk.EntityMetadata)
+		for i := range pk.EntityLinks {
+			pk.EntityLinks[i] = t.translateEntityLink(pk.EntityLinks[i])
+		}
 	case *packet.AddItemActor:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+		pk.EntityMetadata = t.translateEntityMetadata(pk.EntityMetadata)
 	case *packet.AddPainting:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.AddPlayer:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
+		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+		pk.EntityMetadata = t.translateEntityMetadata(pk.EntityMetadata)
+		for i := range pk.EntityLinks {
+			pk.EntityLinks[i] = t.translateEntityLink(pk.EntityLinks[i])
+		}
+	case *packet.AddVolumeEntity:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.AdventureSettings:
 		pk.PlayerUniqueID = t.translateUniqueID(pk.PlayerUniqueID)
@@ -67,12 +78,25 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.Camera:
 		pk.CameraEntityUniqueID = t.translateUniqueID(pk.CameraEntityUniqueID)
 		pk.TargetPlayerUniqueID = t.translateUniqueID(pk.TargetPlayerUniqueID)
+	case *packet.ClientBoundMapItemData:
+		for i, x := range pk.TrackedObjects {
+			if x.Type == protocol.MapObjectTypeEntity {
+				x.EntityUniqueID = t.translateUniqueID(x.EntityUniqueID)
+				pk.TrackedObjects[i] = x
+			}
+		}
+	case *packet.CommandBlockUpdate:
+		if !pk.Block {
+			pk.MinecartEntityRuntimeID = t.translateRuntimeID(pk.MinecartEntityRuntimeID)
+		}
 	case *packet.CommandOutput:
 		pk.CommandOrigin.PlayerUniqueID = t.translateUniqueID(pk.CommandOrigin.PlayerUniqueID)
 	case *packet.CommandRequest:
 		pk.CommandOrigin.PlayerUniqueID = t.translateUniqueID(pk.CommandOrigin.PlayerUniqueID)
 	case *packet.ContainerOpen:
 		pk.ContainerEntityUniqueID = t.translateUniqueID(pk.ContainerEntityUniqueID)
+	case *packet.CreatePhoto:
+		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 	case *packet.DebugInfo:
 		pk.PlayerUniqueID = t.translateUniqueID(pk.PlayerUniqueID)
 	case *packet.Emote:
@@ -81,8 +105,23 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.PlayerRuntimeID = t.translateRuntimeID(pk.PlayerRuntimeID)
 	case *packet.Event:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+		switch data := pk.EventData.(type) {
+		case *protocol.MobKilledEventData:
+			data.KillerEntityUniqueID = t.translateUniqueID(data.KillerEntityUniqueID)
+			data.VictimEntityUniqueID = t.translateUniqueID(data.VictimEntityUniqueID)
+		case *protocol.BossKilledEventData:
+			data.BossEntityUniqueID = t.translateUniqueID(data.BossEntityUniqueID)
+		case *protocol.PetDiedEventData:
+			data.KillerEntityUniqueID = t.translateUniqueID(data.KillerEntityUniqueID)
+			data.PetEntityUniqueID = t.translateUniqueID(data.PetEntityUniqueID)
+		}
 	case *packet.Interact:
 		pk.TargetEntityRuntimeID = t.translateRuntimeID(pk.TargetEntityRuntimeID)
+	case *packet.InventoryTransaction:
+		switch data := pk.TransactionData.(type) {
+		case *protocol.UseItemOnEntityTransactionData:
+			data.TargetEntityRuntimeID = t.translateRuntimeID(data.TargetEntityRuntimeID)
+		}
 	case *packet.MobArmourEquipment:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.MobEffect:
@@ -102,6 +141,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.ActorUniqueID = uint64(t.translateUniqueID(int64(pk.ActorUniqueID)))
 	case *packet.NPCRequest:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+	case *packet.PhotoTransfer:
+		pk.OwnerEntityUniqueID = t.translateUniqueID(pk.OwnerEntityUniqueID)
 	case *packet.PlayerAction:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.PlayerList:
@@ -110,13 +151,15 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		}
 	case *packet.RemoveActor:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
+	case *packet.RemoveVolumeEntity:
+		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.Respawn:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.SetActorData:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+		pk.EntityMetadata = t.translateEntityMetadata(pk.EntityMetadata)
 	case *packet.SetActorLink:
-		pk.EntityLink.RiddenEntityUniqueID = t.translateUniqueID(pk.EntityLink.RiddenEntityUniqueID)
-		pk.EntityLink.RiderEntityUniqueID = t.translateUniqueID(pk.EntityLink.RiderEntityUniqueID)
+		pk.EntityLink = t.translateEntityLink(pk.EntityLink)
 	case *packet.SetActorMotion:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.SetLocalPlayerAsInitialised:
@@ -149,10 +192,19 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.TakerEntityRuntimeID = t.translateRuntimeID(pk.TakerEntityRuntimeID)
 	case *packet.UpdateAttributes:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+	case *packet.UpdateBlockSynced:
+		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 	case *packet.UpdateEquip:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 	case *packet.UpdatePlayerGameType:
 		pk.PlayerUniqueID = t.translateUniqueID(pk.PlayerUniqueID)
+	case *packet.UpdateSubChunkBlocks:
+		for i, entry := range pk.Blocks {
+			pk.Blocks[i].SyncedUpdateEntityUniqueID = uint64(t.translateUniqueID(int64(entry.SyncedUpdateEntityUniqueID)))
+		}
+		for i, entry := range pk.Extra {
+			pk.Extra[i].SyncedUpdateEntityUniqueID = uint64(t.translateUniqueID(int64(entry.SyncedUpdateEntityUniqueID)))
+		}
 	case *packet.UpdateTrade:
 		pk.VillagerUniqueID = t.translateUniqueID(pk.VillagerUniqueID)
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
@@ -183,4 +235,33 @@ func (t *translator) translateUniqueID(id int64) int64 {
 		return original
 	}
 	return id
+}
+
+// translateEntityLink returns the correct entity link for the client to function properly.
+func (t *translator) translateEntityLink(x protocol.EntityLink) protocol.EntityLink {
+	x.RiddenEntityUniqueID = t.translateUniqueID(x.RiddenEntityUniqueID)
+	x.RiderEntityUniqueID = t.translateUniqueID(x.RiderEntityUniqueID)
+	return x
+}
+
+// translateEntityMetadata returns the correct entity metadata for the client to function properly. It translates the
+// entity IDs to make sure there are no conflicts after transferring servers.
+func (t *translator) translateEntityMetadata(x map[uint32]interface{}) map[uint32]interface{} {
+	for k, v := range x {
+		switch k {
+		case 5: // Owner ID
+			x[5] = t.translateUniqueID(v.(int64))
+		case 6: // Target ID
+			x[6] = t.translateUniqueID(v.(int64))
+		case 17: // Shooter ID
+			x[17] = t.translateUniqueID(v.(int64))
+		case 37: // Leash holder ID
+			x[37] = t.translateUniqueID(v.(int64))
+		case 88: // Player agent ID
+			x[88] = t.translateUniqueID(v.(int64))
+		case 124: // Base Runtime ID
+			x[124] = t.translateRuntimeID(v.(uint64))
+		}
+	}
+	return x
 }

@@ -50,7 +50,7 @@ type Config struct {
 	// ResourcePacks holds settings related to sending resource packs to players.
 	ResourcePacks struct {
 		// Required is if players are required to download the resource packs before connecting.
-		Required bool `json:"force"`
+		Required bool `json:"required"`
 		// Directory is the directory to load resource packs from. They can be directories, .zip files or .mcpack files.
 		Directory string
 	}
@@ -83,13 +83,11 @@ func LoadResourcePacks(dir string) ([]*resource.Pack, error) {
 
 	packs := make([]*resource.Pack, 0, len(files))
 	for _, file := range files {
-		if file.IsDir() {
-			pack, err := resource.Compile(filepath.Join(dir, file.Name()))
-			if err != nil {
-				return nil, err
-			}
-			packs = append(packs, pack)
+		pack, err := resource.Compile(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
 		}
+		packs = append(packs, pack)
 	}
 	return packs, nil
 }

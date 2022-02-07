@@ -1,5 +1,8 @@
 name: Build Portal
-on: [ release ]
+on:
+  release:
+    types:
+      - created
 jobs:
   build:
     name: Build ${{ matrix.os }}-${{ matrix.arch }}

@@ -24,20 +24,7 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
       - name: Build Executable
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} -ldflags="-s -w" -v .
-  release:
-    needs: [build]
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug
-        run: ls -R
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            portal_darwin_amd64
-            portal_darwin_arm
-            portal_linux_amd64
-            portal_linux_arm
-            portal_windows_amd64.exe
-            portal_windows_arm.exe
+          files: portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}

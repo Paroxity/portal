@@ -1,17 +1,13 @@
 name: Build Portal
-on: [ push ]
+on: [ release ]
 jobs:
   build:
     name: Build ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, '[ci-build]')
     strategy:
       matrix:
         os: [ "linux", "darwin", "windows" ]
         arch: [ "amd64", "arm" ]
-        exclude:
-          - os: "darwin"
-            arch: "arm"
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -25,15 +21,24 @@ jobs:
           export PATH=$PATH:$GOPATH/bin
       - name: Build Executable
         run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} -ldflags="-s -w" -v .
-      - name: Upload Executable
-        env:
-          HOST: ${{ secrets.HOST }}
-          ADDRESS: ${{ secrets.ADDRESS }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $ADDRESS >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_rsa $HOST mkdir -p /home/paroxity/portal_builds/$GITHUB_SHA
-          scp -i ~/.ssh/id_rsa portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} $HOST:/home/paroxity/portal_builds/$GITHUB_SHA/portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.14
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ "linux", "darwin", "windows" ]
+        arch: [ "amd64", "arm" ]
+    steps:
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            portal_darwin_amd64
+            portal_darwin_arm
+            portal_linux_amd64
+            portal_linux_arm
+            portal_windows_amd64.exe
+            portal_windows_arm.exe

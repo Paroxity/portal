@@ -28,6 +28,7 @@ jobs:
     steps:
       - name: Release
         uses: softprops/action-gh-release@v1
+        run: ls -R
         with:
           files: |
             portal_darwin_amd64

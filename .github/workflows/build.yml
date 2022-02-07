@@ -8,6 +8,9 @@ jobs:
       matrix:
         os: [ "linux", "darwin", "windows" ]
         arch: [ "amd64", "arm" ]
+        exclude:
+          - os: "darwin"
+            arch: "arm"
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2

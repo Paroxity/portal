@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20201229145248-615b0916ca38 // indirect
-	github.com/sandertv/gophertunnel v1.18.2
+	github.com/sandertv/gophertunnel v1.19.1
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.8.1
 	github.com/yourbasic/radix v0.0.0-20180308122924-cbe1cc82e907 // indirect

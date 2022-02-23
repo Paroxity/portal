@@ -147,6 +147,8 @@ github.com/sandertv/gophertunnel v1.15.1 h1:zRfuaNBCjgPuobYy86Azgy2W/8V8KtrnSWoF
 github.com/sandertv/gophertunnel v1.15.1/go.mod h1:TpC717w6p5WIDDLhQzaXeumOjCsGpsjyzxTCvA4hceg=
 github.com/sandertv/gophertunnel v1.17.1 h1:+GDHscrJ3LUd8fKgumsLhPni15Wty6IqEOfZLISejUE=
 github.com/sandertv/gophertunnel v1.17.1/go.mod h1:cu9ZDQVTXY1RJO/te3syrPvCeCAzKt9eB4jkSzXljTw=
+github.com/sandertv/gophertunnel v1.19.1 h1:qaiqOSFtBc5VjyMZD8RUdPJHSzGmaG4XplJB9q133II=
+github.com/sandertv/gophertunnel v1.19.1/go.mod h1:cu9ZDQVTXY1RJO/te3syrPvCeCAzKt9eB4jkSzXljTw=
 github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e h1:7q6NSFZDeGfvvtIRwBrU/aegEYJYmvev0cHAwo17zZQ=
 github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=

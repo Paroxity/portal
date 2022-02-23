@@ -59,8 +59,8 @@ func handlePackets(s *Session) {
 							Mode:            packet.MoveModeReset,
 						})
 
-						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopRain, EventData: 10000})
-						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.EventStopThunder})
+						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.LevelEventStopRaining, EventData: 10000})
+						_ = s.conn.WritePacket(&packet.LevelEvent{EventType: packet.LevelEventStopThunderstorm})
 						_ = s.conn.WritePacket(&packet.SetDifficulty{Difficulty: uint32(gameData.Difficulty)})
 						_ = s.conn.WritePacket(&packet.GameRulesChanged{GameRules: gameData.GameRules})
 						_ = s.conn.WritePacket(&packet.SetPlayerGameType{GameType: gameData.PlayerGameMode})

@@ -201,8 +201,7 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 		for x := int32(-1); x <= 1; x++ {
 			for z := int32(-1); z <= 1; z++ {
 				_ = s.conn.WritePacket(&packet.LevelChunk{
-					ChunkX:        chunkX + x,
-					ChunkZ:        chunkZ + z,
+					Position:      protocol.ChunkPos{chunkX + x, chunkZ + z},
 					SubChunkCount: 0,
 					RawPayload:    emptyChunkData,
 				})

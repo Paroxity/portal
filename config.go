@@ -53,7 +53,7 @@ type Config struct {
 		Required bool `json:"required"`
 		// Directory is the directory to load resource packs from. They can be directories, .zip files or .mcpack files.
 		Directory string
-	}
+	} `json:"resource_packs"`
 }
 
 // DefaultConfig returns a configuration with the default values filled out.

@@ -73,7 +73,7 @@ func main() {
 			p.Logger().Errorf("failed to accept connection: %v", err)
 			continue
 		}
-		p.Logger().Infof("%s has been connected to server %s", s.Conn().IdentityData().DisplayName, s.Server().Name())
+		_ = s
 	}
 }
 

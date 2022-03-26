@@ -34,6 +34,7 @@ type Session struct {
 	// h holds the current handler of the session.
 	h Handler
 
+	loginMu        sync.RWMutex
 	serverMu       sync.RWMutex
 	server         *server.Server
 	serverConn     *minecraft.Conn
@@ -80,24 +81,29 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 	if srv == nil {
 		return nil, errors.New("load balancer did not return a server for the player to join")
 	}
+	srv.IncrementPlayerCount()
 	s.server = srv
-
-	srvConn, err := s.dial(srv)
-	if err != nil {
-		return nil, err
-	}
-
-	s.serverConn = srvConn
-	if err = s.login(); err != nil {
-		_ = srvConn.Close()
-
-		return nil, err
-	}
-
 	s.translator = newTranslator(conn.GameData())
 
-	handlePackets(s)
-	srv.IncrementPlayerCount()
+	s.loginMu.Lock()
+	go func() {
+		defer s.loginMu.Unlock()
+		srvConn, err := s.dial(srv)
+		if err != nil {
+			log.Errorf("failed to dial server %s: %w", srv.Address(), err)
+			return
+		}
+
+		s.serverConn = srvConn
+		if err = s.login(); err != nil {
+			_ = srvConn.Close()
+			log.Errorf("failed to login to server %s: %w", srv.Address(), err)
+			return
+		}
+		log.Infof("%s has been connected to server %s", conn.IdentityData().DisplayName, srv.Name())
+
+		handlePackets(s)
+	}()
 	return s, nil
 }
 
@@ -117,24 +123,33 @@ func (s *Session) login() (err error) {
 	var g sync.WaitGroup
 	g.Add(2)
 	go func() {
-		err = s.conn.StartGameTimeout(s.ServerConn().GameData(), time.Minute)
+		err = s.conn.StartGameTimeout(s.serverConn.GameData(), time.Minute)
 		g.Done()
 	}()
 	go func() {
-		err = s.ServerConn().DoSpawnTimeout(time.Minute)
+		err = s.serverConn.DoSpawnTimeout(time.Minute)
 		g.Done()
 	}()
 	g.Wait()
 	return
 }
 
+// waitForLogin uses the login mutex to wait for the login to complete. If the player is still logging in, loginMu will
+// be locked causing this method to block until the login is complete.
+func (s *Session) waitForLogin() {
+	s.loginMu.RLock()
+	s.loginMu.RUnlock()
+}
+
 // Conn returns the active connection for the session.
 func (s *Session) Conn() *minecraft.Conn {
+	s.waitForLogin()
 	return s.conn
 }
 
 // Server returns the server the session is currently connected to.
 func (s *Session) Server() *server.Server {
+	s.waitForLogin()
 	s.serverMu.RLock()
 	defer s.serverMu.RUnlock()
 	return s.server
@@ -142,6 +157,7 @@ func (s *Session) Server() *server.Server {
 
 // ServerConn returns the connection for the session's current server.
 func (s *Session) ServerConn() *minecraft.Conn {
+	s.waitForLogin()
 	s.serverMu.RLock()
 	defer s.serverMu.RUnlock()
 	return s.serverConn
@@ -167,6 +183,7 @@ func (s *Session) Handle(h Handler) {
 // Transfer transfers the session to the provided server, returning any error that may have occurred during
 // the initial transfer.
 func (s *Session) Transfer(srv *server.Server) (err error) {
+	s.waitForLogin()
 	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
 	}
@@ -235,9 +252,8 @@ func (s *Session) setTransferring(v bool) {
 // handler() returns the handler connected to the session.
 func (s *Session) handler() Handler {
 	s.hMutex.RLock()
-	handler := s.h
-	s.hMutex.RUnlock()
-	return handler
+	defer s.hMutex.RUnlock()
+	return s.h
 }
 
 // Close closes the session and any linked connections/counters.
@@ -249,7 +265,9 @@ func (s *Session) Close() {
 		s.store.Delete(s.UUID())
 
 		_ = s.conn.Close()
-		_ = s.ServerConn().Close()
+		if s.serverConn != nil {
+			_ = s.serverConn.Close()
+		}
 		if s.tempServerConn != nil {
 			_ = s.tempServerConn.Close()
 		}

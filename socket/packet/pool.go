@@ -26,6 +26,7 @@ func init() {
 	packets := map[uint16]func() Packet{
 		IDAuthRequest:         func() Packet { return &AuthRequest{} },
 		IDAuthResponse:        func() Packet { return &AuthResponse{} },
+		IDRegisterServer:      func() Packet { return &RegisterServer{} },
 		IDTransferRequest:     func() Packet { return &TransferRequest{} },
 		IDTransferResponse:    func() Packet { return &TransferResponse{} },
 		IDPlayerInfoRequest:   func() Packet { return &PlayerInfoRequest{} },

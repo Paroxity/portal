@@ -10,10 +10,14 @@ func (s *DefaultServer) ReportPlayerLatency(interval time.Duration) {
 	for {
 		for _, session := range s.SessionStore().All() {
 			srv := session.Server()
-			if srv == nil || !srv.Connected() {
+			if srv == nil {
 				continue
 			}
-			if err := srv.Conn().WritePacket(&packet.UpdatePlayerLatency{
+			conn, ok := s.Client(srv.Name())
+			if !ok {
+				continue
+			}
+			if err := conn.WritePacket(&packet.UpdatePlayerLatency{
 				PlayerUUID: session.UUID(),
 				Latency:    session.Conn().Latency().Milliseconds(),
 			}); err != nil {

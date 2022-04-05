@@ -22,6 +22,7 @@ func RegisterHandler(id uint16, h PacketHandler) {
 
 func init() {
 	RegisterHandler(packet.IDAuthRequest, &AuthRequestHandler{})
+	RegisterHandler(packet.IDRegisterServer, &RegisterServerHandler{})
 	RegisterHandler(packet.IDTransferRequest, &TransferRequestHandler{})
 	RegisterHandler(packet.IDPlayerInfoRequest, &PlayerInfoRequestHandler{})
 	RegisterHandler(packet.IDServerListRequest, &ServerListRequestHandler{})

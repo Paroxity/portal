@@ -14,7 +14,6 @@ func (*ServerListRequestHandler) Handle(_ packet.Packet, srv Server, c *Client) 
 	for _, s := range srv.ServerRegistry().Servers() {
 		entry := packet.ServerEntry{
 			Name:        s.Name(),
-			Online:      s.Connected(),
 			PlayerCount: int64(s.PlayerCount()),
 		}
 		servers = append(servers, entry)

@@ -1,10 +1,7 @@
 package socket
 
 import (
-	"bytes"
-	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	_ "unsafe"
 )
 
@@ -15,38 +12,26 @@ type AuthRequestHandler struct{}
 func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {
 	pk := p.(*packet.AuthRequest)
 
+	if c.Authenticated() {
+		return nil
+	}
+
+	if pk.Protocol != packet.ProtocolVersion {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": unsupported protocol version %d", pk.Name, pk.Protocol)
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnsupportedProtocol})
+	}
 	if pk.Secret != srv.Secret() {
 		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": incorrect secret provided", pk.Name)
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseIncorrectSecret})
 	}
-
-	data := bytes.NewBuffer(pk.ExtraData)
-	r := protocol.NewReader(data, 0)
-	switch pk.Type {
-	case packet.ClientTypeServer:
-		var address string
-		r.String(&address)
-
-		s, ok := srv.ServerRegistry().Server(pk.Name)
-		if !ok {
-			s = server.New(pk.Name, address)
-			srv.ServerRegistry().AddServer(s)
-		} else if s.Connected() {
-			srv.Logger().Errorf("failed socket authentication attempt from \"%s\": server is already connected", pk.Name)
-			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
-		}
-
-		c.name = pk.Name
-		c.clientType = pk.Type
-		c.extraData["address"] = address
-
-		server_setConn(s, c)
-	default:
-		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnknownType})
+	_, ok := srv.Client(pk.Name)
+	if ok {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": a connection already exists with this name", pk.Name)
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseAlreadyConnected})
 	}
 
-	c.Authenticate()
-	srv.Logger().Infof("socket connection \"%s\" successfully authenticated", pk.Name)
+	c.Authenticate(pk.Name)
+	srv.Logger().Debugf("socket connection \"%s\" successfully authenticated", pk.Name)
 	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
 }
 
@@ -54,7 +39,3 @@ func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error 
 func (*AuthRequestHandler) RequiresAuth() bool {
 	return false
 }
-
-//go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn
-//noinspection ALL
-func server_setConn(s *server.Server, c server.Client)

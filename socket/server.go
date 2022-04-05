@@ -7,6 +7,7 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 	"net"
 	"strings"
+	"sync"
 )
 
 type Server interface {
@@ -19,6 +20,11 @@ type Server interface {
 	// Secret returns the secret required for connections to authenticate.
 	Secret() string
 
+	// Clients returns all the clients that are connected to the socket server.
+	Clients() []*Client
+	// Client attempts to return a client from the provided name, case-sensitive.
+	Client(name string) (*Client, bool)
+
 	// SessionStore returns the store used to hold the open sessions on the proxy.
 	SessionStore() *session.Store
 	// ServerRegistry returns the registry used to store available servers on the proxy.
@@ -30,9 +36,12 @@ type Server interface {
 type DefaultServer struct {
 	log internal.Logger
 
-	addr     string
-	secret   string
-	listener net.Listener
+	addr   string
+	secret string
+
+	listener  net.Listener
+	clientsMu sync.RWMutex
+	clients   map[string]*Client
 
 	sessionStore   *session.Store
 	serverRegistry *server.Registry
@@ -45,6 +54,8 @@ func NewDefaultServer(addr, secret string, sessionStore *session.Store, serverRe
 
 		addr:   addr,
 		secret: secret,
+
+		clients: make(map[string]*Client),
 
 		sessionStore:   sessionStore,
 		serverRegistry: serverRegistry,
@@ -77,7 +88,10 @@ func (s *DefaultServer) Listen() error {
 
 // handleClient handles a client that has been accepted from the server.
 func (s *DefaultServer) handleClient(c *Client) {
-	defer c.Close(s.serverRegistry)
+	defer s.handleClientDisconnect(c)
+	s.clientsMu.Lock()
+	s.clients[c.Name()] = c
+	s.clientsMu.Unlock()
 
 	for {
 		pk, err := c.ReadPacket()
@@ -93,7 +107,7 @@ func (s *DefaultServer) handleClient(c *Client) {
 		if ok {
 			if !c.Authenticated() && h.RequiresAuth() {
 				_ = c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnauthenticated})
-				s.log.Debugf("received %T from unauthenticated client", pk)
+				s.log.Debugf("received packet %T from unauthenticated client", pk)
 				return
 			}
 			if err := h.Handle(pk, s, c); err != nil {
@@ -101,11 +115,23 @@ func (s *DefaultServer) handleClient(c *Client) {
 			}
 		} else {
 			if c.name == "" {
-				s.log.Debugf("unhandled packet %T from unauthorized socket connection", pk)
+				s.log.Debugf("unhandled packet %T from unauthenticated socket connection", pk)
 			} else {
 				s.log.Debugf("unhandled packet %T from %s socket connection", pk, c.name)
 			}
 		}
+	}
+}
+
+func (s *DefaultServer) handleClientDisconnect(c *Client) {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+	delete(s.clients, c.Name())
+	s.log.Debugf("socket connection \"%s\" closed", c.name)
+	srv, ok := s.serverRegistry.Server(c.Name())
+	if ok {
+		s.serverRegistry.RemoveServer(srv)
+		s.log.Debugf("removed server for socket connection \"%s\"", c.Name())
 	}
 }
 
@@ -117,6 +143,24 @@ func (s *DefaultServer) Logger() internal.Logger {
 // Secret ...
 func (s *DefaultServer) Secret() string {
 	return s.secret
+}
+
+// Clients ...
+func (s *DefaultServer) Clients() (clients []*Client) {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+	for _, client := range s.clients {
+		clients = append(clients, client)
+	}
+	return
+}
+
+// Client ...
+func (s *DefaultServer) Client(name string) (*Client, bool) {
+	s.clientsMu.RLock()
+	defer s.clientsMu.RUnlock()
+	client, ok := s.clients[name]
+	return client, ok
 }
 
 // SessionStore ...

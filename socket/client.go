@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/paroxity/portal/internal"
-	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"go.uber.org/atomic"
@@ -24,10 +23,7 @@ type Client struct {
 	hdr    *packet.Header
 	buf    *bytes.Buffer
 
-	name       string
-	clientType uint8
-	extraData  map[string]interface{}
-
+	name          string
 	authenticated atomic.Bool
 }
 
@@ -41,8 +37,6 @@ func NewClient(conn net.Conn, log internal.Logger) *Client {
 		pool: packet.NewPool(),
 		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
 		hdr:  &packet.Header{},
-
-		extraData: make(map[string]interface{}),
 	}
 }
 
@@ -52,22 +46,15 @@ func (c *Client) Name() string {
 }
 
 // Close closes the client and related connections.
-func (c *Client) Close(registry *server.Registry) error {
-	c.log.Debugf("Socket connection \"%s\" closed", c.name)
-
-	switch c.clientType {
-	case packet.ClientTypeServer:
-		if srv, ok := registry.Server(c.Name()); ok {
-			registry.RemoveServer(srv)
-		}
-	}
-
+func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-// Authenticate marks the client as authenticated.
-func (c *Client) Authenticate() {
-	c.authenticated.Store(true)
+// Authenticate marks the client as authenticated and gives it the provided name.
+func (c *Client) Authenticate(name string) {
+	if c.authenticated.CAS(false, true) {
+		c.name = name
+	}
 }
 
 // Authenticated returns if the client has been authenticated or not.

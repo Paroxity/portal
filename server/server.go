@@ -9,8 +9,6 @@ type Server struct {
 	name    string
 	address string
 
-	connection Client
-
 	playerCount atomic.Int64
 }
 
@@ -33,22 +31,6 @@ func (s *Server) Name() string {
 // by a colon. E.g. "127.0.0.1:19132".
 func (s *Server) Address() string {
 	return s.address
-}
-
-// Connected returns if the server is connected to the TCP socket server or not.
-func (s *Server) Connected() bool {
-	return s.connection != nil
-}
-
-// Conn returns the TCP socket client the server is connected to. If the server is not connected, this
-// function returns nil.
-func (s *Server) Conn() Client {
-	return s.connection
-}
-
-// setConn sets the TCP socket client the server is connected to.
-func (s *Server) setConn(c Client) {
-	s.connection = c
 }
 
 // IncrementPlayerCount increments the player count of the server.

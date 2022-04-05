@@ -3,26 +3,25 @@ package main
 import (
 	"encoding/json"
 	"github.com/paroxity/portal"
+	"github.com/paroxity/portal/internal"
 	portallog "github.com/paroxity/portal/log"
 	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 )
 
 func main() {
-	conf := readConfig()
-
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.TextFormatter{
 		ForceColors:     true,
 		FullTimestamp:   true,
 		TimestampFormat: "15:04:05",
 	})
+	conf := readConfig(logger)
 	if conf.Logger.File != "" {
 		fileLogger, err := portallog.New(conf.Logger.File)
 		if err != nil {
@@ -77,28 +76,28 @@ func main() {
 	}
 }
 
-func readConfig() portal.Config {
+func readConfig(logger internal.Logger) portal.Config {
 	c := portal.DefaultConfig()
 	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
 		f, err := os.Create("config.json")
 		if err != nil {
-			log.Fatalf("error creating config: %v", err)
+			logger.Fatalf("error creating config: %v", err)
 		}
 		data, err := json.MarshalIndent(c, "", "\t")
 		if err != nil {
-			log.Fatalf("error encoding default config: %v", err)
+			logger.Fatalf("error encoding default config: %v", err)
 		}
 		if _, err := f.Write(data); err != nil {
-			log.Fatalf("error writing encoded default config: %v", err)
+			logger.Fatalf("error writing encoded default config: %v", err)
 		}
 		_ = f.Close()
 	}
 	data, err := ioutil.ReadFile("config.json")
 	if err != nil {
-		log.Fatalf("error reading config: %v", err)
+		logger.Fatalf("error reading config: %v", err)
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
-		log.Fatalf("error decoding config: %v", err)
+		logger.Fatalf("error decoding config: %v", err)
 	}
 	return c
 }

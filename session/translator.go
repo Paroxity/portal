@@ -138,7 +138,7 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 		pk.RiddenEntityRuntimeID = t.translateRuntimeID(pk.RiddenEntityRuntimeID)
 	case *packet.NPCDialogue:
-		pk.ActorUniqueID = uint64(t.translateUniqueID(int64(pk.ActorUniqueID)))
+		pk.EntityUniqueID = uint64(t.translateUniqueID(int64(pk.EntityUniqueID)))
 	case *packet.NPCRequest:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.PhotoTransfer:

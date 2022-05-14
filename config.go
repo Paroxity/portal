@@ -52,7 +52,7 @@ type Config struct {
 		// Required is if players are required to download the resource packs before connecting.
 		Required bool `json:"required"`
 		// Directory is the directory to load resource packs from. They can be directories, .zip files or .mcpack files.
-		Directory string
+		Directory string `json:"directory"`
 	} `json:"resource_packs"`
 }
 

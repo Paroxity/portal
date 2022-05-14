@@ -53,6 +53,8 @@ type Config struct {
 		Required bool `json:"required"`
 		// Directory is the directory to load resource packs from. They can be directories, .zip files or .mcpack files.
 		Directory string `json:"directory"`
+		// EncryptionKeys is a map of resource pack UUIDs to their encryption key.
+		EncryptionKeys map[string]string `json:"encryption_keys,omitempty"`
 	} `json:"resource_packs"`
 }
 

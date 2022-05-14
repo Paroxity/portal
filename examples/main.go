@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/paroxity/portal"
 	"github.com/paroxity/portal/internal"
 	portallog "github.com/paroxity/portal/log"
@@ -40,6 +41,14 @@ func main() {
 	resourcePacks, err := portal.LoadResourcePacks(conf.ResourcePacks.Directory)
 	if err != nil {
 		logger.Fatalf("unable to load resource packs: %v", err)
+	}
+	for i, pack := range resourcePacks {
+		fmt.Println(pack.UUID(), len(conf.ResourcePacks.EncryptionKeys))
+		key, ok := conf.ResourcePacks.EncryptionKeys[pack.UUID()]
+		if ok {
+			resourcePacks[i] = pack.WithContentKey(key)
+			fmt.Println("encrypted")
+		}
 	}
 
 	p := portal.New(portal.Options{

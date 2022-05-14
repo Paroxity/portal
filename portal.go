@@ -85,8 +85,9 @@ func (p *Portal) Listen() error {
 	return nil
 }
 
-// Accept accepts a fully connected (on Minecraft layer) connection which is ready to receive and send
-// packets. If the listener is closed or the player failed to spawn in then an error will be returned.
+// Accept accepts a fully connected (on Minecraft layer) connection which is ready to receive and send packets. If the
+// listener is closed or the player failed to spawn in then an error will be returned. When an error is returned the
+// session is also returned, but it may be incomplete and contain nil values.
 func (p *Portal) Accept() (*session.Session, error) {
 	p.Logger().Debugf("waiting to accept...")
 	if p.listener == nil {

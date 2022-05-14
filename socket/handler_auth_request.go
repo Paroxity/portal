@@ -30,7 +30,7 @@ func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error 
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseAlreadyConnected})
 	}
 
-	c.Authenticate(pk.Name)
+	srv.Authenticate(c, pk.Name)
 	srv.Logger().Debugf("socket connection \"%s\" successfully authenticated", pk.Name)
 	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
 }

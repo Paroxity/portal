@@ -24,6 +24,9 @@ type Server interface {
 	Clients() []*Client
 	// Client attempts to return a client from the provided name, case-sensitive.
 	Client(name string) (*Client, bool)
+	// Authenticate marks the client as authenticated with the provided name. It is safe to assume that the provided
+	// name is not in use, unless called by places other than the socket server.
+	Authenticate(c *Client, name string)
 
 	// SessionStore returns the store used to hold the open sessions on the proxy.
 	SessionStore() *session.Store
@@ -39,9 +42,10 @@ type DefaultServer struct {
 	addr   string
 	secret string
 
-	listener  net.Listener
-	clientsMu sync.RWMutex
-	clients   map[string]*Client
+	listener           net.Listener
+	clientsMu          sync.RWMutex
+	clients            map[string]*Client
+	unconnectedClients map[net.Addr]*Client
 
 	sessionStore   *session.Store
 	serverRegistry *server.Registry
@@ -55,7 +59,8 @@ func NewDefaultServer(addr, secret string, sessionStore *session.Store, serverRe
 		addr:   addr,
 		secret: secret,
 
-		clients: make(map[string]*Client),
+		clients:            make(map[string]*Client),
+		unconnectedClients: make(map[net.Addr]*Client),
 
 		sessionStore:   sessionStore,
 		serverRegistry: serverRegistry,
@@ -88,9 +93,8 @@ func (s *DefaultServer) Listen() error {
 
 // handleClient handles a client that has been accepted from the server.
 func (s *DefaultServer) handleClient(c *Client) {
-	defer s.handleClientDisconnect(c)
 	s.clientsMu.Lock()
-	s.clients[c.Name()] = c
+	s.unconnectedClients[c.conn.RemoteAddr()] = c
 	s.clientsMu.Unlock()
 
 	for {
@@ -127,6 +131,7 @@ func (s *DefaultServer) handleClientDisconnect(c *Client) {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 	delete(s.clients, c.Name())
+	delete(s.unconnectedClients, c.conn.RemoteAddr())
 	s.log.Debugf("socket connection \"%s\" closed", c.name)
 	srv, ok := s.serverRegistry.Server(c.Name())
 	if ok {
@@ -161,6 +166,15 @@ func (s *DefaultServer) Client(name string) (*Client, bool) {
 	defer s.clientsMu.RUnlock()
 	client, ok := s.clients[name]
 	return client, ok
+}
+
+// Authenticate ...
+func (s *DefaultServer) Authenticate(c *Client, name string) {
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
+	delete(s.unconnectedClients, c.conn.RemoteAddr())
+	s.clients[name] = c
+	c.Authenticate(name)
 }
 
 // SessionStore ...

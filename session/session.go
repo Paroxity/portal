@@ -272,7 +272,9 @@ func (s *Session) Close() {
 			_ = s.tempServerConn.Close()
 		}
 
-		s.Server().DecrementPlayerCount()
+		if s.server != nil {
+			s.server.DecrementPlayerCount()
+		}
 	})
 }
 

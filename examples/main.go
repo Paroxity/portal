@@ -70,7 +70,7 @@ func main() {
 	for {
 		s, err := p.Accept()
 		if err != nil {
-			s.Disconnect(text.Colourf("<red>%w</red>", err))
+			s.Disconnect(text.Colourf("<red>%v</red>", err))
 			p.Logger().Errorf("failed to accept connection: %v", err)
 			continue
 		}

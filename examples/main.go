@@ -8,6 +8,7 @@ import (
 	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket"
 	"github.com/sandertv/gophertunnel/minecraft"
+	"github.com/sandertv/gophertunnel/minecraft/text"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -69,6 +70,7 @@ func main() {
 	for {
 		s, err := p.Accept()
 		if err != nil {
+			s.Disconnect(text.Colourf("<red>%w</red>", err))
 			p.Logger().Errorf("failed to accept connection: %v", err)
 			continue
 		}

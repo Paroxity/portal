@@ -54,8 +54,8 @@ type Session struct {
 }
 
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log internal.Logger) (_ *Session, err error) {
-	s := &Session{
+func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log internal.Logger) (s *Session, err error) {
+	s = &Session{
 		log:   log,
 		conn:  conn,
 		store: store,
@@ -79,7 +79,7 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 
 	srv := loadBalancer.FindServer(s)
 	if srv == nil {
-		return nil, errors.New("load balancer did not return a server for the player to join")
+		return s, errors.New("load balancer did not return a server for the player to join")
 	}
 	srv.IncrementPlayerCount()
 	s.server = srv
@@ -274,6 +274,16 @@ func (s *Session) Close() {
 
 		s.Server().DecrementPlayerCount()
 	})
+}
+
+// Disconnect disconnects the session from the proxy and shows them the provided message. If the message is empty, the
+// player will be immediately sent to the server list instead of seeing the disconnect screen.
+func (s *Session) Disconnect(message string) {
+	_ = s.conn.WritePacket(&packet.Disconnect{
+		HideDisconnectionScreen: message == "",
+		Message:                 message,
+	})
+	s.Close()
 }
 
 // clearEntities flushes the entities map and despawns the entities for the client.

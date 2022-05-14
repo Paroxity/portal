@@ -91,8 +91,9 @@ func (s *DefaultServer) Listen() error {
 	return nil
 }
 
-// handleClient handles a client that has been accepted from the server.
+// handleClient handles a client that has been accepted from the socket server.
 func (s *DefaultServer) handleClient(c *Client) {
+	defer s.handleClientDisconnect(c)
 	s.clientsMu.Lock()
 	s.unconnectedClients[c.conn.RemoteAddr()] = c
 	s.clientsMu.Unlock()
@@ -112,7 +113,7 @@ func (s *DefaultServer) handleClient(c *Client) {
 			if !c.Authenticated() && h.RequiresAuth() {
 				_ = c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnauthenticated})
 				s.log.Debugf("received packet %T from unauthenticated client", pk)
-				return
+				continue
 			}
 			if err := h.Handle(pk, s, c); err != nil {
 				s.log.Errorf("socket server unable to handle packet: %v", err)
@@ -127,6 +128,7 @@ func (s *DefaultServer) handleClient(c *Client) {
 	}
 }
 
+// handleClientDisconnect handles a client that has been disconnected from the socket server.
 func (s *DefaultServer) handleClientDisconnect(c *Client) {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()

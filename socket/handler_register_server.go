@@ -5,7 +5,7 @@ import (
 	"github.com/paroxity/portal/socket/packet"
 )
 
-// RegisterServerHandler is responsible for handling the ServerListRequest packet sent by servers.
+// RegisterServerHandler is responsible for handling the RegisterServer packet sent by servers.
 type RegisterServerHandler struct{ requireAuth }
 
 // Handle ...

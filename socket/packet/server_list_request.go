@@ -14,7 +14,7 @@ func (*ServerListRequest) ID() uint16 {
 }
 
 // Marshal ...
-func (pk *ServerListRequest) Marshal(w *protocol.Writer){}
+func (pk *ServerListRequest) Marshal(*protocol.Writer) {}
 
 // Unmarshal ...
-func (pk *ServerListRequest) Unmarshal(r *protocol.Reader){}
+func (pk *ServerListRequest) Unmarshal(*protocol.Reader) {}

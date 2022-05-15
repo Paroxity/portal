@@ -1,12 +1,7 @@
 package socket
 
 import (
-	"bytes"
-	"github.com/paroxity/portal/config"
-	"github.com/paroxity/portal/server"
 	"github.com/paroxity/portal/socket/packet"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/sirupsen/logrus"
 	_ "unsafe"
 )
 
@@ -14,51 +9,33 @@ import (
 type AuthRequestHandler struct{}
 
 // Handle ...
-func (*AuthRequestHandler) Handle(p packet.Packet, c *Client) error {
+func (*AuthRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {
 	pk := p.(*packet.AuthRequest)
 
-	if pk.Secret != config.SocketSecret() {
-		logrus.Errorf("Failed socket authentication attempt from \"%s\": Incorrect secret provided", pk.Name)
+	if c.Authenticated() {
+		return nil
+	}
+
+	if pk.Protocol != packet.ProtocolVersion {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": unsupported protocol version %d", pk.Name, pk.Protocol)
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnsupportedProtocol})
+	}
+	if pk.Secret != srv.Secret() {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": incorrect secret provided", pk.Name)
 		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseIncorrectSecret})
 	}
-
-	data := bytes.NewBuffer(pk.ExtraData)
-	r := protocol.NewReader(data, 0)
-	switch pk.Type {
-	case packet.ClientTypeServer:
-		var group, address string
-		r.String(&group)
-		r.String(&address)
-
-		g, ok := server.GroupFromName(group)
-		if !ok {
-			logrus.Errorf("Failed socket authentication attempt from \"%s\": Group \"%s\" not found", pk.Name, group)
-			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
-		}
-
-		s, ok := g.Server(pk.Name)
-		if !ok {
-			s = server.New(pk.Name, g.Name(), address)
-			g.AddServer(s)
-		} else if s.Connected() {
-			logrus.Errorf("Failed socket authentication attempt from \"%s\": Server is already connected\n", pk.Name)
-			return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseInvalidData})
-		}
-
-		c.name = pk.Name
-		c.clientType = pk.Type
-		c.extraData["address"] = address
-		c.extraData["group"] = g.Name()
-
-		server_setConn(s, c)
-	default:
-		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseUnknownType})
+	_, ok := srv.Client(pk.Name)
+	if ok {
+		srv.Logger().Errorf("failed socket authentication attempt from \"%s\": a connection already exists with this name", pk.Name)
+		return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseAlreadyConnected})
 	}
 
-	logrus.Infof("Socket connection \"%s\" successfully authenticated\n", pk.Name)
+	srv.Authenticate(c, pk.Name)
+	srv.Logger().Debugf("socket connection \"%s\" successfully authenticated", pk.Name)
 	return c.WritePacket(&packet.AuthResponse{Status: packet.AuthResponseSuccess})
 }
 
-//go:linkname server_setConn github.com/paroxity/portal/server.(*Server).setConn
-//noinspection ALL
-func server_setConn(s *server.Server, c server.Client)
+// RequiresAuth ...
+func (*AuthRequestHandler) RequiresAuth() bool {
+	return false
+}

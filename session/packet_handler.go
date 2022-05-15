@@ -7,7 +7,6 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
-	"log"
 	"sync"
 )
 
@@ -19,7 +18,7 @@ func handlePackets(s *Session) {
 		for {
 			pk, err := s.Conn().ReadPacket()
 			if err != nil {
-				log.Println(err)
+				s.log.Errorf("failed to read packet from connection: %v", err)
 				return
 			}
 			s.translatePacket(pk)
@@ -79,7 +78,7 @@ func handlePackets(s *Session) {
 						s.transferring.Store(false)
 						s.postTransfer.Store(true)
 
-						logrus.Infof("%s finished transferring\n", s.conn.IdentityData().DisplayName)
+						s.log.Infof("%s finished transferring to %s", s.Conn().IdentityData().DisplayName, s.Server().Name())
 						continue
 					} else if s.postTransfer.CAS(true, false) {
 						continue

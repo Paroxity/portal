@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/paroxity/portal/event"
-	"github.com/paroxity/portal/query"
+	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/server"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
@@ -13,29 +13,28 @@ import (
 	"github.com/scylladb/go-set/i32set"
 	"github.com/scylladb/go-set/i64set"
 	"github.com/scylladb/go-set/strset"
-	"github.com/sirupsen/logrus"
 	"go.uber.org/atomic"
-	"strings"
 	"sync"
 	"time"
 )
 
 var (
 	emptyChunkData = make([]byte, 257)
-
-	sessions, nameToUUID sync.Map
 )
 
 // Session stores the data for an active session on the proxy.
 type Session struct {
 	*translator
 
-	conn *minecraft.Conn
+	log   internal.Logger
+	conn  *minecraft.Conn
+	store *Store
 
 	hMutex sync.RWMutex
 	// h holds the current handler of the session.
 	h Handler
 
+	loginMu        sync.RWMutex
 	serverMu       sync.RWMutex
 	server         *server.Server
 	serverConn     *minecraft.Conn
@@ -54,38 +53,12 @@ type Session struct {
 	once         sync.Once
 }
 
-// All returns all of the connected sessions on the proxy.
-func All() []*Session {
-	var s []*Session
-	sessions.Range(func(_, v interface{}) bool {
-		s = append(s, v.(*Session))
-		return true
-	})
-	return s
-}
-
-// Lookup attempts to find a Session with the provided UUID.
-func Lookup(v uuid.UUID) (*Session, bool) {
-	s, ok := sessions.Load(v)
-	if !ok {
-		return nil, false
-	}
-	return s.(*Session), true
-}
-
-// LookupByName attempts to find a session with the provided name.
-func LookupByName(name string) (*Session, bool) {
-	v, ok := nameToUUID.Load(strings.ToLower(name))
-	if !ok {
-		return nil, false
-	}
-	return Lookup(v.(uuid.UUID))
-}
-
 // New creates a new Session with the provided connection.
-func New(conn *minecraft.Conn) (_ *Session, err error) {
-	s := &Session{
-		conn: conn,
+func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log internal.Logger) (s *Session, err error) {
+	s = &Session{
+		log:   log,
+		conn:  conn,
+		store: store,
 
 		entities:    i64set.New(),
 		playerList:  b16set.New(),
@@ -97,38 +70,40 @@ func New(conn *minecraft.Conn) (_ *Session, err error) {
 		uuid: uuid.MustParse(conn.IdentityData().Identity),
 	}
 
-	sessions.Store(s.uuid, s)
-	nameToUUID.Store(strings.ToLower(conn.IdentityData().DisplayName), s.uuid)
+	store.Store(s)
 	defer func() {
 		if err != nil {
-			sessions.Delete(s.uuid)
-			nameToUUID.Delete(strings.ToLower(conn.IdentityData().DisplayName))
+			store.Delete(s.UUID())
 		}
 	}()
 
-	srv := LoadBalancer()(s)
+	srv := loadBalancer.FindServer(s)
 	if srv == nil {
-		return nil, errors.New("load balancer did not return a server for the player to join")
+		return s, errors.New("load balancer did not return a server for the player to join")
 	}
+	srv.IncrementPlayerCount()
 	s.server = srv
-
-	srvConn, err := s.dial(srv)
-	if err != nil {
-		return nil, err
-	}
-
-	s.serverConn = srvConn
-	if err = s.login(); err != nil {
-		_ = srvConn.Close()
-
-		return nil, err
-	}
-
 	s.translator = newTranslator(conn.GameData())
 
-	handlePackets(s)
-	srv.IncrementPlayerCount()
-	query.IncrementPlayerCount()
+	s.loginMu.Lock()
+	go func() {
+		defer s.loginMu.Unlock()
+		srvConn, err := s.dial(srv)
+		if err != nil {
+			log.Errorf("failed to dial server %s: %w", srv.Address(), err)
+			return
+		}
+
+		s.serverConn = srvConn
+		if err = s.login(); err != nil {
+			_ = srvConn.Close()
+			log.Errorf("failed to login to server %s: %w", srv.Address(), err)
+			return
+		}
+		log.Infof("%s has been connected to server %s", conn.IdentityData().DisplayName, srv.Name())
+
+		handlePackets(s)
+	}()
 	return s, nil
 }
 
@@ -148,24 +123,33 @@ func (s *Session) login() (err error) {
 	var g sync.WaitGroup
 	g.Add(2)
 	go func() {
-		err = s.conn.StartGameTimeout(s.ServerConn().GameData(), time.Minute)
+		err = s.conn.StartGameTimeout(s.serverConn.GameData(), time.Minute)
 		g.Done()
 	}()
 	go func() {
-		err = s.ServerConn().DoSpawnTimeout(time.Minute)
+		err = s.serverConn.DoSpawnTimeout(time.Minute)
 		g.Done()
 	}()
 	g.Wait()
 	return
 }
 
+// waitForLogin uses the login mutex to wait for the login to complete. If the player is still logging in, loginMu will
+// be locked causing this method to block until the login is complete.
+func (s *Session) waitForLogin() {
+	s.loginMu.RLock()
+	s.loginMu.RUnlock()
+}
+
 // Conn returns the active connection for the session.
 func (s *Session) Conn() *minecraft.Conn {
+	s.waitForLogin()
 	return s.conn
 }
 
 // Server returns the server the session is currently connected to.
 func (s *Session) Server() *server.Server {
+	s.waitForLogin()
 	s.serverMu.RLock()
 	defer s.serverMu.RUnlock()
 	return s.server
@@ -173,6 +157,7 @@ func (s *Session) Server() *server.Server {
 
 // ServerConn returns the connection for the session's current server.
 func (s *Session) ServerConn() *minecraft.Conn {
+	s.waitForLogin()
 	s.serverMu.RLock()
 	defer s.serverMu.RUnlock()
 	return s.serverConn
@@ -198,11 +183,12 @@ func (s *Session) Handle(h Handler) {
 // Transfer transfers the session to the provided server, returning any error that may have occurred during
 // the initial transfer.
 func (s *Session) Transfer(srv *server.Server) (err error) {
+	s.waitForLogin()
 	if !s.transferring.CAS(false, true) {
 		return errors.New("already being transferred")
 	}
 
-	logrus.Infof("Transferring %s to server %s in group %s\n", s.conn.IdentityData().DisplayName, srv.Name(), srv.Group())
+	s.log.Infof("%s is being transferred from %s to %s", s.conn.IdentityData().DisplayName, s.Server().Name(), srv.Name())
 
 	ctx := event.C()
 	s.handler().HandleTransfer(ctx, srv)
@@ -266,9 +252,8 @@ func (s *Session) setTransferring(v bool) {
 // handler() returns the handler connected to the session.
 func (s *Session) handler() Handler {
 	s.hMutex.RLock()
-	handler := s.h
-	s.hMutex.RUnlock()
-	return handler
+	defer s.hMutex.RUnlock()
+	return s.h
 }
 
 // Close closes the session and any linked connections/counters.
@@ -277,18 +262,30 @@ func (s *Session) Close() {
 		s.handler().HandleQuit()
 		s.Handle(NopHandler{})
 
-		sessions.Delete(s.UUID())
-		nameToUUID.Delete(s.conn.IdentityData().DisplayName)
+		s.store.Delete(s.UUID())
 
 		_ = s.conn.Close()
-		_ = s.ServerConn().Close()
+		if s.serverConn != nil {
+			_ = s.serverConn.Close()
+		}
 		if s.tempServerConn != nil {
 			_ = s.tempServerConn.Close()
 		}
 
-		s.server.DecrementPlayerCount()
-		query.DecrementPlayerCount()
+		if s.server != nil {
+			s.server.DecrementPlayerCount()
+		}
 	})
+}
+
+// Disconnect disconnects the session from the proxy and shows them the provided message. If the message is empty, the
+// player will be immediately sent to the server list instead of seeing the disconnect screen.
+func (s *Session) Disconnect(message string) {
+	_ = s.conn.WritePacket(&packet.Disconnect{
+		HideDisconnectionScreen: message == "",
+		Message:                 message,
+	})
+	s.Close()
 }
 
 // clearEntities flushes the entities map and despawns the entities for the client.
@@ -328,7 +325,7 @@ func (s *Session) clearEffects() {
 	s.effects.Clear()
 }
 
-// clearBossBars clears all of the boss bars currently visible the client.
+// clearBossBars clears all the boss bars currently visible the client.
 func (s *Session) clearBossBars() {
 	s.bossBars.Each(func(b int64) bool {
 		_ = s.conn.WritePacket(&packet.BossEvent{

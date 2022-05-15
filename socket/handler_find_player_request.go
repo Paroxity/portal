@@ -1,19 +1,18 @@
 package socket
 
 import (
-	"github.com/paroxity/portal/session"
 	"github.com/paroxity/portal/socket/packet"
 )
 
 // FindPlayerRequestHandler is responsible for handling the FindPlayerRequest packet sent by servers.
-type FindPlayerRequestHandler struct{}
+type FindPlayerRequestHandler struct{ requireAuth }
 
 // Handle ...
-func (*FindPlayerRequestHandler) Handle(p packet.Packet, c *Client) error {
+func (*FindPlayerRequestHandler) Handle(p packet.Packet, srv Server, c *Client) error {
 	pk := p.(*packet.FindPlayerRequest)
-	s, ok := session.Lookup(pk.PlayerUUID)
+	s, ok := srv.SessionStore().Load(pk.PlayerUUID)
 	if !ok {
-		s, ok = session.LookupByName(pk.PlayerName)
+		s, ok = srv.SessionStore().LoadFromName(pk.PlayerName)
 		if !ok {
 			return c.WritePacket(&packet.FindPlayerResponse{
 				PlayerUUID: pk.PlayerUUID,
@@ -27,7 +26,6 @@ func (*FindPlayerRequestHandler) Handle(p packet.Packet, c *Client) error {
 		PlayerUUID: s.UUID(),
 		PlayerName: s.Conn().IdentityData().DisplayName,
 		Online:     true,
-		Group:      s.Server().Group(),
 		Server:     s.Server().Name(),
 	})
 }

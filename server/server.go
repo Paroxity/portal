@@ -7,19 +7,15 @@ import (
 // Server represents a server connected to the proxy which players can join and play on.
 type Server struct {
 	name    string
-	group   string
 	address string
-
-	connection Client
 
 	playerCount atomic.Int64
 }
 
 // New creates a new Server with the provided name, group and address.
-func New(name, group, address string) *Server {
+func New(name, address string) *Server {
 	s := &Server{
 		name:    name,
-		group:   group,
 		address: address,
 	}
 
@@ -31,31 +27,10 @@ func (s *Server) Name() string {
 	return s.name
 }
 
-// Group returns the name of the group the server was registered with.
-func (s *Server) Group() string {
-	return s.group
-}
-
 // Address returns the IP address the server was registered with. This should also contain the port separated
 // by a colon. E.g. "127.0.0.1:19132".
 func (s *Server) Address() string {
 	return s.address
-}
-
-// Connected returns if the server is connected to the TCP socket server or not.
-func (s *Server) Connected() bool {
-	return s.connection != nil
-}
-
-// Conn returns the TCP socket client the server is connected to. If the server is not connected, this
-// function returns nil.
-func (s *Server) Conn() Client {
-	return s.connection
-}
-
-// setConn sets the TCP socket client the server is connected to.
-func (s *Server) setConn(c Client) {
-	s.connection = c
 }
 
 // IncrementPlayerCount increments the player count of the server.

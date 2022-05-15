@@ -2,5 +2,6 @@
 .idea/
 
 # Portal
+resource_packs/
 config.json
 *.log

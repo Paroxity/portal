@@ -1,46 +1,32 @@
 package session
 
 import (
-	"errors"
 	"github.com/paroxity/portal/server"
-	"strings"
 )
 
-var (
-	loadBalancers = make(map[string]func(session *Session) *server.Server)
-	loadBalancer  string
-)
-
-// LoadBalancer returns the selected load balancer method.
-func LoadBalancer() func(session *Session) *server.Server {
-	return loadBalancers[loadBalancer]
+// LoadBalancer represents a load balancer which helps balance the load of players on the proxy.
+type LoadBalancer interface {
+	// FindServer finds a server for the session to connect to when they first join. If nil is returned, the
+	// player is kicked from the proxy.
+	FindServer(session *Session) *server.Server
 }
 
-// RegisterLoadBalancer registers a load balancer method to be used when a session joins.
-func RegisterLoadBalancer(name string, f func(session *Session) *server.Server) {
-	loadBalancers[strings.ToLower(name)] = f
+// SplitLoadBalancer attempts to split players evenly across all the servers.
+type SplitLoadBalancer struct {
+	registry *server.Registry
 }
 
-// SetLoadBalancer sets the default load balancer to be used when a player joins the proxy. If the provided
-// load balancer does not exist, an error is returned.
-func SetLoadBalancer(name string) error {
-	if _, ok := loadBalancers[strings.ToLower(name)]; !ok {
-		return errors.New("load balancer not registered")
-	}
-	loadBalancer = strings.ToLower(name)
-	return nil
+// NewSplitLoadBalancer creates a "split" load balancer with the provided server registry.
+func NewSplitLoadBalancer(registry *server.Registry) *SplitLoadBalancer {
+	return &SplitLoadBalancer{registry: registry}
 }
 
-func init() {
-	RegisterLoadBalancer("split", func(session *Session) (srv *server.Server) {
-		for _, s := range server.DefaultGroup().Servers() {
-			if srv == nil || srv.PlayerCount() > s.PlayerCount() {
-				srv = s
-			}
+// FindServer ...
+func (b *SplitLoadBalancer) FindServer(*Session) (srv *server.Server) {
+	for _, s := range b.registry.Servers() {
+		if srv == nil || srv.PlayerCount() > s.PlayerCount() {
+			srv = s
 		}
-		return srv
-	})
-	if err := SetLoadBalancer("split"); err != nil {
-		panic(err)
 	}
+	return srv
 }

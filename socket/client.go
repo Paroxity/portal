@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/paroxity/portal/server"
+	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/socket/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/atomic"
 	"net"
 	"sync"
 )
 
 // Client represents a client connected over the TCP socket system.
 type Client struct {
+	log  internal.Logger
 	conn net.Conn
 
 	pool packet.Pool
@@ -22,22 +23,20 @@ type Client struct {
 	hdr    *packet.Header
 	buf    *bytes.Buffer
 
-	name       string
-	clientType uint8
-	extraData  map[string]interface{}
+	name          string
+	authenticated atomic.Bool
 }
 
 // NewClient creates a new socket Client with default allocations and required data. It pre-allocates 4096
 // bytes to prevent allocations during runtime as much as possible.
-func NewClient(conn net.Conn) *Client {
+func NewClient(conn net.Conn, log internal.Logger) *Client {
 	return &Client{
+		log:  log,
 		conn: conn,
 
 		pool: packet.NewPool(),
 		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
 		hdr:  &packet.Header{},
-
-		extraData: make(map[string]interface{}),
 	}
 }
 
@@ -48,19 +47,19 @@ func (c *Client) Name() string {
 
 // Close closes the client and related connections.
 func (c *Client) Close() error {
-	logrus.Debugf("Socket connection \"%s\" closed\n", c.name)
-
-	switch c.clientType {
-	case packet.ClientTypeServer:
-		if name, ok := c.extraData["group"]; ok {
-			g, _ := server.GroupFromName(name.(string))
-			s, _ := g.Server(c.name)
-
-			server_setConn(s, nil)
-		}
-	}
-
 	return c.conn.Close()
+}
+
+// Authenticate marks the client as authenticated and gives it the provided name.
+func (c *Client) Authenticate(name string) {
+	if c.authenticated.CAS(false, true) {
+		c.name = name
+	}
+}
+
+// Authenticated returns if the client has been authenticated or not.
+func (c *Client) Authenticated() bool {
+	return c.authenticated.Load()
 }
 
 // ReadPacket reads a packet from the connection and returns it. The client is expected to prefix the packet

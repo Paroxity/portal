@@ -7,7 +7,9 @@ import (
 // PacketHandler represents a type which handles a specific packet coming from a client.
 type PacketHandler interface {
 	// Handle is responsible for handling an incoming packet for the client.
-	Handle(p packet.Packet, c *Client) error
+	Handle(p packet.Packet, src Server, c *Client) error
+	// RequiresAuth returns if the client must be authenticated in order for the handler to be triggered.
+	RequiresAuth() bool
 }
 
 var handlers = make(map[uint16]PacketHandler)
@@ -20,8 +22,17 @@ func RegisterHandler(id uint16, h PacketHandler) {
 
 func init() {
 	RegisterHandler(packet.IDAuthRequest, &AuthRequestHandler{})
+	RegisterHandler(packet.IDRegisterServer, &RegisterServerHandler{})
 	RegisterHandler(packet.IDTransferRequest, &TransferRequestHandler{})
 	RegisterHandler(packet.IDPlayerInfoRequest, &PlayerInfoRequestHandler{})
 	RegisterHandler(packet.IDServerListRequest, &ServerListRequestHandler{})
 	RegisterHandler(packet.IDFindPlayerRequest, &FindPlayerRequestHandler{})
+}
+
+// requireAuth implements the RequiresAuth() method and always returns true.
+type requireAuth struct{}
+
+// RequiresAuth ...
+func (*requireAuth) RequiresAuth() bool {
+	return true
 }

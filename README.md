@@ -10,25 +10,21 @@ A lightweight transfer proxy written in Go for Minecraft: Bedrock Edition.
 # Configuration
 After running portal for the first time, a default configuration file called `config.json` will be created in the same directory as the program.
 ### Overview of the configuration file
-- **query**
-    - **maxPlayers:** The maximum number of players allowed to connect to the proxy simultaneously. 0 means no limit.
-    - **motd:** A message to display to players on the server connect screen. Supports minecraft formatting codes.
+- **network**
+  - **address**: The address on which the proxy should listen. Players may connect to this address in order to join. It should be in the format of "ip:port"
+  - **communication**
+    - **address**: Address is the address on which the communication service should listen. External connections can use this address in order to communicate with the proxy. It should be in the format of "ip:port"
+    - **secret**: Secret is the authentication secret required by external connections in order to authenticate to the proxy and start communicating
+- **logger** 
+  - **file**: File is the path to the file in which logs should be stored. If the path is empty then logs will not be written to a file
+  - **level**: Level is the required level logs should have to be shown in console or in the file above
+- **player_latency**
+  - **report**: Determines if the proxy should send the proxy of a player to their server at a regular interval
+  - **update_interval**: The interval to report a player's ping if report is true
 - **whitelist**
-    - **enabled:** Whether or to enable the whitelist.
-    - **players:** An array of player names to whitelist.
-- **proxy**
-    - **bindAddress:** The address to bind the proxy to.
-    - **groups:** A list of server groups to use. Each group contains a list of servers within their respective group.
-    - **defaultGroup:** The default group to route players to when they connect.
-    - **authentication:** Whether to authenticate players when they connect. Disabling this will allow users to use any name when connecting
-    - **resourceDir:** Directory that resource packs are loaded from.
-    - **forceTextures:** Force players to accept the resource pack before joining.
-- **playerLatency**
-    - **report:** Whether to report player latency to the server.
-    - **updateInterval:** The interval at which to update the player latency, in seconds.
-- **socket**
-    - **bindAddress:** The address to bind the socket server to.
-    - **secret:** The secret key for clients to authenticate with. Leaving this blank could allow anyone to register their server to the proxy.
-- **logger**
-    - **file:** File to output logs to.
-    - **debug:** Whether to output debug logs.
+  - **enabled**: Determines if the whitelist is enabled
+  - **players**: A list of whitelisted players' usernames
+- **resource_packs**
+  - **required**: Determines if players are required to download the resource packs before connecting
+  - **directory**: The directory to load resource packs from. They can be directories, .zip files or .mcpack files
+  - **encryption_keys**: A map of resource pack UUIDs to their encryption key

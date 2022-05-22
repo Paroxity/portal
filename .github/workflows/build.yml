@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ "linux", "darwin", "windows" ]
-        arch: [ "amd64", "arm" ]
+        arch: [ "amd64", "arm64" ]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2

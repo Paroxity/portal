@@ -64,7 +64,7 @@ func (c *Client) Authenticated() bool {
 
 // ReadPacket reads a packet from the connection and returns it. The client is expected to prefix the packet
 // payload with 4 bytes for the length of the payload.
-func (c *Client) ReadPacket() (packet.Packet, error) {
+func (c *Client) ReadPacket() (pk packet.Packet, err error) {
 	var l uint32
 	if err := binary.Read(c.conn, binary.LittleEndian, &l); err != nil {
 		return nil, err
@@ -90,6 +90,11 @@ func (c *Client) ReadPacket() (packet.Packet, error) {
 		return nil, fmt.Errorf("unknown packet %v", header.PacketID)
 	}
 
+	defer func() {
+		if recoveredErr := recover(); recoveredErr != nil {
+			err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
+		}
+	}()
 	pk.Unmarshal(protocol.NewReader(buf, 0))
 	if buf.Len() > 0 {
 		return nil, fmt.Errorf("still have %v bytes unread", buf.Len())

@@ -18,10 +18,6 @@ import (
 	"time"
 )
 
-var (
-	emptyChunkData = make([]byte, 257)
-)
-
 // Session stores the data for an active session on the proxy.
 type Session struct {
 	*translator
@@ -206,9 +202,17 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 		s.tempServerConn = conn
 		s.serverMu.Unlock()
 
+		var proxyDimension int32
+		for _, dimension := range []int32{packet.DimensionOverworld, packet.DimensionNether, packet.DimensionEnd} {
+			if dimension != s.serverConn.GameData().Dimension && dimension != conn.GameData().Dimension {
+				proxyDimension = dimension
+				break
+			}
+		}
+
 		pos := s.conn.GameData().PlayerPosition
 		_ = s.conn.WritePacket(&packet.ChangeDimension{
-			Dimension: packet.DimensionNether,
+			Dimension: proxyDimension,
 			Position:  pos,
 		})
 		_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
@@ -219,8 +223,8 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 			for z := int32(-1); z <= 1; z++ {
 				_ = s.conn.WritePacket(&packet.LevelChunk{
 					Position:      protocol.ChunkPos{chunkX + x, chunkZ + z},
-					SubChunkCount: 0,
-					RawPayload:    emptyChunkData,
+					SubChunkCount: 1,
+					RawPayload:    emptyChunk(proxyDimension),
 				})
 			}
 		}

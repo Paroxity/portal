@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.11
-	github.com/sandertv/gophertunnel v1.23.0
+	github.com/sandertv/gophertunnel v1.24.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.8.1
 	go.uber.org/atomic v1.9.0

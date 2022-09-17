@@ -6,17 +6,20 @@ import (
 
 // Server represents a server connected to the proxy which players can join and play on.
 type Server struct {
-	name    string
-	address string
+	name      string
+	address   string
+	useRakNet bool
 
 	playerCount atomic.Int64
 }
 
-// New creates a new Server with the provided name, group and address.
-func New(name, address string) *Server {
+// New creates a new Server with the provided name, group and address as well as if the connection should use the RakNet
+// protocol or not.
+func New(name, address string, useRakNet bool) *Server {
 	s := &Server{
-		name:    name,
-		address: address,
+		name:      name,
+		address:   address,
+		useRakNet: useRakNet,
 	}
 
 	return s
@@ -31,6 +34,11 @@ func (s *Server) Name() string {
 // by a colon. E.g. "127.0.0.1:19132".
 func (s *Server) Address() string {
 	return s.address
+}
+
+// UseRakNet returns if a connection should use the RakNet protocol when connecting to the server.
+func (s *Server) UseRakNet() bool {
+	return s.useRakNet
 }
 
 // IncrementPlayerCount increments the player count of the server.

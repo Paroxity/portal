@@ -79,7 +79,6 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 	}
 	srv.IncrementPlayerCount()
 	s.server = srv
-	s.translator = newTranslator(conn.GameData())
 
 	s.loginMu.Lock()
 	go func() {
@@ -98,6 +97,7 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 		}
 		log.Infof("%s has been connected to server %s", conn.IdentityData().DisplayName, srv.Name())
 
+		s.translator = newTranslator(srvConn.GameData())
 		handlePackets(s)
 	}()
 	return s, nil

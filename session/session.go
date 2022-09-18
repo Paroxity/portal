@@ -6,6 +6,7 @@ import (
 	"github.com/paroxity/portal/event"
 	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/server"
+	"github.com/paroxity/portal/session/tcpprotocol"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
@@ -114,7 +115,11 @@ func (s *Session) dial(srv *server.Server) (ServerConn, error) {
 			IdentityData: i,
 		}.Dial("raknet", srv.Address())
 	}
-	return NewTCPConn(srv.Address(), s.conn.RemoteAddr().String(), i, s.conn.ClientData())
+	return tcpprotocol.Dialer{
+		ClientData:        s.conn.ClientData(),
+		IdentityData:      i,
+		EnableClientCache: s.conn.ClientCacheEnabled(),
+	}.Dial("tcp", srv.Address(), s.conn.RemoteAddr().String())
 }
 
 // login performs the initial login sequence for the session.

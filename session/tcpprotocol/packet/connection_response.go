@@ -1,4 +1,4 @@
-package tcpprotocol
+package packet
 
 import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
@@ -6,7 +6,7 @@ import (
 
 const (
 	ConnectionResponseSuccess byte = iota
-	ConnectionResponseInvalidProtocol
+	ConnectionResponseUnsupportedProtocol
 )
 
 // ConnectionResponse is sent by the server in response to a ConnectionRequest packet. It contains the response and if

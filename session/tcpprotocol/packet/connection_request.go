@@ -1,4 +1,4 @@
-package tcpprotocol
+package packet
 
 import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"

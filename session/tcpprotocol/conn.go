@@ -59,18 +59,16 @@ func (conn *Conn) login(playerAddress string) error {
 	if err != nil {
 		return err
 	}
-	pk, err := conn.ReadPacket()
+
+	connectionResponse, err := expect[*packet2.ConnectionResponse](conn)
 	if err != nil {
 		return err
-	}
-	connectionResponse, ok := pk.(*packet2.ConnectionResponse)
-	if !ok {
-		return fmt.Errorf("expected ConnectionResponse packet, got %T (%d)", pk, pk.ID())
 	}
 	switch connectionResponse.Response {
 	case packet2.ConnectionResponseUnsupportedProtocol:
 		return fmt.Errorf("unsupported protocol version %d", ProtocolVersion)
 	}
+
 	err = conn.WritePacket(&packet2.PlayerIdentity{
 		IdentityData:      conn.identityData,
 		ClientData:        conn.clientData,
@@ -80,13 +78,10 @@ func (conn *Conn) login(playerAddress string) error {
 	if err != nil {
 		return err
 	}
-	pk, err = conn.ReadPacket()
+
+	startGame, err := expect[*packet.StartGame](conn)
 	if err != nil {
 		return err
-	}
-	startGame, ok := pk.(*packet.StartGame)
-	if !ok {
-		return fmt.Errorf("expected StartGame packet, got %T (%d)", pk, pk.ID())
 	}
 	conn.gameData = minecraft.GameData{
 		Difficulty:                   startGame.Difficulty,
@@ -117,14 +112,11 @@ func (conn *Conn) login(playerAddress string) error {
 // identify attempts to identify the player attempting to connect to the server through the PlayerIdentity packet. An
 // error is returned if it failed to identify.
 func (conn *Conn) identify() error {
-	pk, err := conn.ReadPacket()
+	connectionRequest, err := expect[*packet2.ConnectionRequest](conn)
 	if err != nil {
 		return err
 	}
-	connectionRequest, ok := pk.(*packet2.ConnectionRequest)
-	if !ok {
-		return fmt.Errorf("expected ConnectionRequest packet, got %T (%d)", pk, pk.ID())
-	}
+
 	response := packet2.ConnectionResponseSuccess
 	if connectionRequest.ProtocolVersion != ProtocolVersion {
 		response = packet2.ConnectionResponseUnsupportedProtocol
@@ -135,13 +127,10 @@ func (conn *Conn) identify() error {
 	if err != nil {
 		return err
 	}
-	pk, err = conn.ReadPacket()
+
+	playerIdentity, err := expect[*packet2.PlayerIdentity](conn)
 	if err != nil {
 		return err
-	}
-	playerIdentity, ok := pk.(*packet2.PlayerIdentity)
-	if !ok {
-		return fmt.Errorf("expected PlayerIdentity packet, got %T (%d)", pk, pk.ID())
 	}
 	conn.identityData = playerIdentity.IdentityData
 	conn.clientData = playerIdentity.ClientData
@@ -326,4 +315,16 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 
 	return nil
+}
+
+func expect[T packet.Packet](conn *Conn) (T, error) {
+	pk, err := conn.ReadPacket()
+	if err != nil {
+		return nil, err
+	}
+	t, ok := pk.(T)
+	if !ok {
+		return nil, fmt.Errorf("received unexpected packet %T", pk)
+	}
+	return t, nil
 }

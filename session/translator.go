@@ -56,7 +56,7 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.AddPlayer:
-		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
+		pk.AbilityData.EntityUniqueID = t.translateUniqueID(pk.AbilityData.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 		pk.EntityMetadata = t.translateEntityMetadata(pk.EntityMetadata)
 		for i := range pk.EntityLinks {
@@ -190,6 +190,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.TakeItemActor:
 		pk.ItemEntityRuntimeID = t.translateRuntimeID(pk.ItemEntityRuntimeID)
 		pk.TakerEntityRuntimeID = t.translateRuntimeID(pk.TakerEntityRuntimeID)
+	case *packet.UpdateAbilities:
+		pk.AbilityData.EntityUniqueID = t.translateUniqueID(pk.AbilityData.EntityUniqueID)
 	case *packet.UpdateAttributes:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.UpdateBlockSynced:

@@ -136,7 +136,7 @@ func handlePackets(s *Session) {
 			case *packet.AddPainting:
 				s.entities.Add(pk.EntityUniqueID)
 			case *packet.AddPlayer:
-				s.entities.Add(pk.EntityUniqueID)
+				s.entities.Add(pk.AbilityData.EntityUniqueID)
 			case *packet.BossEvent:
 				if pk.EventType == packet.BossEventShow {
 					s.bossBars.Add(pk.BossEntityUniqueID)

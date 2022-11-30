@@ -4,9 +4,8 @@ go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/klauspost/compress v1.15.4
 	github.com/mattn/go-colorable v0.1.11
-	github.com/sandertv/gophertunnel v1.24.6
+	github.com/sandertv/gophertunnel v1.26.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.8.1
 	go.uber.org/atomic v1.9.0
@@ -16,10 +15,12 @@ require (
 	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/go-gl/mathgl v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/klauspost/compress v1.15.4 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
-	github.com/sandertv/go-raknet v1.11.1 // indirect
+	github.com/sandertv/go-raknet v1.12.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220513210258-46612604a0f9 // indirect
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9 // indirect

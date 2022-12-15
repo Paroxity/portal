@@ -23,7 +23,7 @@ jobs:
           mkdir -p $GOPATH/bin
           export PATH=$PATH:$GOPATH/bin
       - name: Build Executable
-        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} -ldflags="-s -w" -v .
+        run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o portal_${{ matrix.os }}_${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} -ldflags="-s -w" -v example
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 	"github.com/paroxity/portal/event"
 	"github.com/paroxity/portal/internal"
@@ -211,11 +212,7 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 		}
 
 		pos := s.conn.GameData().PlayerPosition
-		_ = s.conn.WritePacket(&packet.ChangeDimension{
-			Dimension: proxyDimension,
-			Position:  pos,
-		})
-		_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
+		s.changeDimension(proxyDimension, pos)
 
 		chunkX := int32(pos.X()) >> 4
 		chunkZ := int32(pos.Z()) >> 4
@@ -350,4 +347,13 @@ func (s *Session) clearScoreboard() {
 	})
 
 	s.scoreboards.Clear()
+}
+
+func (s *Session) changeDimension(dimension int32, pos mgl32.Vec3) {
+	_ = s.conn.WritePacket(&packet.ChangeDimension{
+		Dimension: dimension,
+		Position:  pos,
+	})
+	_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
+	_ = s.conn.WritePacket(&packet.PlayerAction{ActionType: protocol.PlayerActionDimensionChangeDone})
 }

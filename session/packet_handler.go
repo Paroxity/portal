@@ -31,11 +31,7 @@ func handlePackets(s *Session) {
 					if s.transferring.Load() {
 						s.serverMu.Lock()
 						gameData := s.tempServerConn.GameData()
-						_ = s.conn.WritePacket(&packet.ChangeDimension{
-							Dimension: packet.DimensionOverworld,
-							Position:  gameData.PlayerPosition,
-						})
-						_ = s.conn.WritePacket(&packet.StopSound{StopAll: true})
+						s.changeDimension(packet.DimensionOverworld, gameData.PlayerPosition)
 
 						var w sync.WaitGroup
 						w.Add(2)
@@ -136,7 +132,7 @@ func handlePackets(s *Session) {
 			case *packet.AddPainting:
 				s.entities.Add(pk.EntityUniqueID)
 			case *packet.AddPlayer:
-				s.entities.Add(pk.EntityUniqueID)
+				s.entities.Add(pk.AbilityData.EntityUniqueID)
 			case *packet.BossEvent:
 				if pk.EventType == packet.BossEventShow {
 					s.bossBars.Add(pk.BossEntityUniqueID)

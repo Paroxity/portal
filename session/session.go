@@ -7,6 +7,7 @@ import (
 	"github.com/paroxity/portal/event"
 	"github.com/paroxity/portal/internal"
 	"github.com/paroxity/portal/server"
+	"github.com/paroxity/portal/session/tcpprotocol"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
@@ -34,8 +35,8 @@ type Session struct {
 	loginMu        sync.RWMutex
 	serverMu       sync.RWMutex
 	server         *server.Server
-	serverConn     *minecraft.Conn
-	tempServerConn *minecraft.Conn
+	serverConn     ServerConn
+	tempServerConn ServerConn
 
 	entities    *i64set.Set
 	playerList  *b16set.Set
@@ -106,13 +107,20 @@ func New(conn *minecraft.Conn, store *Store, loadBalancer LoadBalancer, log inte
 
 // dial dials a new connection to the provided server. It then returns the connection between the proxy and
 // that server, along with any error that may have occurred.
-func (s *Session) dial(srv *server.Server) (*minecraft.Conn, error) {
+func (s *Session) dial(srv *server.Server) (ServerConn, error) {
 	i := s.conn.IdentityData()
 	i.XUID = ""
-	return minecraft.Dialer{
-		ClientData:   s.conn.ClientData(),
-		IdentityData: i,
-	}.Dial("raknet", srv.Address())
+	if srv.UseRakNet() {
+		return minecraft.Dialer{
+			ClientData:   s.conn.ClientData(),
+			IdentityData: i,
+		}.Dial("raknet", srv.Address())
+	}
+	return tcpprotocol.Dialer{
+		ClientData:        s.conn.ClientData(),
+		IdentityData:      i,
+		EnableClientCache: s.conn.ClientCacheEnabled(),
+	}.Dial("tcp", srv.Address(), s.conn.RemoteAddr().String())
 }
 
 // login performs the initial login sequence for the session.
@@ -153,7 +161,7 @@ func (s *Session) Server() *server.Server {
 }
 
 // ServerConn returns the connection for the session's current server.
-func (s *Session) ServerConn() *minecraft.Conn {
+func (s *Session) ServerConn() ServerConn {
 	s.waitForLogin()
 	s.serverMu.RLock()
 	defer s.serverMu.RUnlock()

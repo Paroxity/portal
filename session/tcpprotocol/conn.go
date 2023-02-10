@@ -60,11 +60,11 @@ func (conn *Conn) login(playerAddress string) error {
 		return err
 	}
 
-	connectionResponse, err := expect[*packet2.ConnectionResponse](conn)
+	connectionResponse, err := expect(conn, packet2.IDConnectionResponse)
 	if err != nil {
 		return err
 	}
-	switch connectionResponse.Response {
+	switch connectionResponse.(*packet2.ConnectionResponse).Response {
 	case packet2.ConnectionResponseUnsupportedProtocol:
 		return fmt.Errorf("unsupported protocol version %d", ProtocolVersion)
 	}
@@ -79,32 +79,33 @@ func (conn *Conn) login(playerAddress string) error {
 		return err
 	}
 
-	startGame, err := expect[*packet.StartGame](conn)
+	startGame, err := expect(conn, packet.IDStartGame)
 	if err != nil {
 		return err
 	}
+	startGamePacket := startGame.(*packet.StartGame)
 	conn.gameData = minecraft.GameData{
-		Difficulty:                   startGame.Difficulty,
-		WorldName:                    startGame.WorldName,
-		EntityUniqueID:               startGame.EntityUniqueID,
-		EntityRuntimeID:              startGame.EntityRuntimeID,
-		PlayerGameMode:               startGame.PlayerGameMode,
-		BaseGameVersion:              startGame.BaseGameVersion,
-		PlayerPosition:               startGame.PlayerPosition,
-		Pitch:                        startGame.Pitch,
-		Yaw:                          startGame.Yaw,
-		Dimension:                    startGame.Dimension,
-		WorldSpawn:                   startGame.WorldSpawn,
-		EditorWorld:                  startGame.EditorWorld,
-		GameRules:                    startGame.GameRules,
-		Time:                         startGame.Time,
-		ServerBlockStateChecksum:     startGame.ServerBlockStateChecksum,
-		CustomBlocks:                 startGame.Blocks,
-		Items:                        startGame.Items,
-		PlayerMovementSettings:       startGame.PlayerMovementSettings,
-		WorldGameMode:                startGame.WorldGameMode,
-		ServerAuthoritativeInventory: startGame.ServerAuthoritativeInventory,
-		Experiments:                  startGame.Experiments,
+		Difficulty:                   startGamePacket.Difficulty,
+		WorldName:                    startGamePacket.WorldName,
+		EntityUniqueID:               startGamePacket.EntityUniqueID,
+		EntityRuntimeID:              startGamePacket.EntityRuntimeID,
+		PlayerGameMode:               startGamePacket.PlayerGameMode,
+		BaseGameVersion:              startGamePacket.BaseGameVersion,
+		PlayerPosition:               startGamePacket.PlayerPosition,
+		Pitch:                        startGamePacket.Pitch,
+		Yaw:                          startGamePacket.Yaw,
+		Dimension:                    startGamePacket.Dimension,
+		WorldSpawn:                   startGamePacket.WorldSpawn,
+		EditorWorld:                  startGamePacket.EditorWorld,
+		GameRules:                    startGamePacket.GameRules,
+		Time:                         startGamePacket.Time,
+		ServerBlockStateChecksum:     startGamePacket.ServerBlockStateChecksum,
+		CustomBlocks:                 startGamePacket.Blocks,
+		Items:                        startGamePacket.Items,
+		PlayerMovementSettings:       startGamePacket.PlayerMovementSettings,
+		WorldGameMode:                startGamePacket.WorldGameMode,
+		ServerAuthoritativeInventory: startGamePacket.ServerAuthoritativeInventory,
+		Experiments:                  startGamePacket.Experiments,
 	}
 	return nil
 }
@@ -112,13 +113,13 @@ func (conn *Conn) login(playerAddress string) error {
 // identify attempts to identify the player attempting to connect to the server through the PlayerIdentity packet. An
 // error is returned if it failed to identify.
 func (conn *Conn) identify() error {
-	connectionRequest, err := expect[*packet2.ConnectionRequest](conn)
+	connectionRequest, err := expect(conn, packet2.IDConnectionRequest)
 	if err != nil {
 		return err
 	}
 
 	response := packet2.ConnectionResponseSuccess
-	if connectionRequest.ProtocolVersion != ProtocolVersion {
+	if connectionRequest.(*packet2.ConnectionRequest).ProtocolVersion != ProtocolVersion {
 		response = packet2.ConnectionResponseUnsupportedProtocol
 	}
 	err = conn.WritePacket(&packet2.ConnectionResponse{
@@ -128,13 +129,14 @@ func (conn *Conn) identify() error {
 		return err
 	}
 
-	playerIdentity, err := expect[*packet2.PlayerIdentity](conn)
+	playerIdentity, err := expect(conn, packet2.IDPlayerIdentity)
 	if err != nil {
 		return err
 	}
-	conn.identityData = playerIdentity.IdentityData
-	conn.clientData = playerIdentity.ClientData
-	conn.enableClientCache = playerIdentity.EnableClientCache
+	playerIdentityPacket := playerIdentity.(*packet2.PlayerIdentity)
+	conn.identityData = playerIdentityPacket.IdentityData
+	conn.clientData = playerIdentityPacket.ClientData
+	conn.enableClientCache = playerIdentityPacket.EnableClientCache
 	return nil
 }
 
@@ -317,14 +319,13 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	return nil
 }
 
-func expect[T packet.Packet](conn *Conn) (T, error) {
+func expect(conn *Conn, expectedID uint32) (packet.Packet, error) {
 	pk, err := conn.ReadPacket()
 	if err != nil {
-		return nil, err
+		return pk, err
 	}
-	t, ok := pk.(T)
-	if !ok {
+	if pk.ID() != expectedID {
 		return nil, fmt.Errorf("received unexpected packet %T", pk)
 	}
-	return t, nil
+	return pk, nil
 }

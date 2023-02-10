@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/uuid v1.3.0
-	github.com/mattn/go-colorable v0.1.11
+	github.com/mattn/go-colorable v0.1.13
 	github.com/sandertv/gophertunnel v1.27.2
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.9.0
@@ -17,7 +17,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
 	github.com/sandertv/go-raknet v1.12.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect

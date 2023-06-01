@@ -105,13 +105,13 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.PlayerRuntimeID = t.translateRuntimeID(pk.PlayerRuntimeID)
 	case *packet.Event:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
-		switch data := pk.EventData.(type) {
-		case *protocol.MobKilledEventData:
+		switch data := pk.Event.(type) {
+		case *protocol.MobKilledEvent:
 			data.KillerEntityUniqueID = t.translateUniqueID(data.KillerEntityUniqueID)
 			data.VictimEntityUniqueID = t.translateUniqueID(data.VictimEntityUniqueID)
-		case *protocol.BossKilledEventData:
+		case *protocol.BossKilledEvent:
 			data.BossEntityUniqueID = t.translateUniqueID(data.BossEntityUniqueID)
-		case *protocol.PetDiedEventData:
+		case *protocol.PetDiedEvent:
 			data.KillerEntityUniqueID = t.translateUniqueID(data.KillerEntityUniqueID)
 			data.PetEntityUniqueID = t.translateUniqueID(data.PetEntityUniqueID)
 		}

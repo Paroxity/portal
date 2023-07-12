@@ -65,7 +65,7 @@ func main() {
 		logger.Fatalf("failed to listen on %s: %v", conf.Network.Address, err)
 	}
 
-	socketServer := socket.NewDefaultServer(conf.Network.Communication.Address, conf.Network.Communication.Secret, p.SessionStore(), p.ServerRegistry(), logger)
+	socketServer := socket.NewDefaultServer(conf.Network.Communication.Address, conf.Network.Communication.Secret, p.SessionStore(), p.ServerRegistry(), logger, conf.Network.ReaderLimits)
 	if err := socketServer.Listen(); err != nil {
 		p.Logger().Fatalf("socket server failed to listen: %v", err)
 	}

@@ -24,6 +24,10 @@ type Config struct {
 			// to the proxy and start communicating.
 			Secret string `json:"secret"`
 		} `json:"communication"`
+		// ReaderLimits determines if things like slices will have a maximum length as they are read from socket clients.
+		// It is recommended that this is always set to true in order to prevent possible attack vectors, however if any
+		// non-malicious clients are reaching these limits, you may want to disable it.
+		ReaderLimits bool `json:"reader_limits"`
 	} `json:"network"`
 	// Logger holds settings related to the logging aspects of the proxy.
 	Logger struct {
@@ -62,6 +66,7 @@ type Config struct {
 func DefaultConfig() (c Config) {
 	c.Network.Address = ":19132"
 	c.Network.Communication.Address = ":19131"
+	c.Network.ReaderLimits = true
 	c.Logger.File = "proxy.log"
 	c.Logger.Level = "debug"
 	c.PlayerLatency.Report = true

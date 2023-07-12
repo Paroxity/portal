@@ -17,6 +17,8 @@ type Client struct {
 	log  internal.Logger
 	conn net.Conn
 
+	readerLimits bool
+
 	pool packet.Pool
 
 	sendMu sync.Mutex
@@ -29,10 +31,12 @@ type Client struct {
 
 // NewClient creates a new socket Client with default allocations and required data. It pre-allocates 4096
 // bytes to prevent allocations during runtime as much as possible.
-func NewClient(conn net.Conn, log internal.Logger) *Client {
+func NewClient(conn net.Conn, log internal.Logger, readerLimits bool) *Client {
 	return &Client{
 		log:  log,
 		conn: conn,
+
+		readerLimits: readerLimits,
 
 		pool: packet.NewPool(),
 		buf:  bytes.NewBuffer(make([]byte, 0, 4096)),
@@ -95,7 +99,7 @@ func (c *Client) ReadPacket() (pk packet.Packet, err error) {
 			err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
 		}
 	}()
-	pk.Unmarshal(protocol.NewReader(buf, 0))
+	pk.Unmarshal(protocol.NewReader(buf, 0, c.readerLimits))
 	if buf.Len() > 0 {
 		return nil, fmt.Errorf("still have %v bytes unread", buf.Len())
 	}

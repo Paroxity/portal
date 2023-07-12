@@ -39,8 +39,9 @@ type Server interface {
 type DefaultServer struct {
 	log internal.Logger
 
-	addr   string
-	secret string
+	addr         string
+	secret       string
+	readerLimits bool
 
 	listener           net.Listener
 	clientsMu          sync.RWMutex
@@ -52,12 +53,13 @@ type DefaultServer struct {
 }
 
 // NewDefaultServer creates a new default server to be used for accepting socket connections.
-func NewDefaultServer(addr, secret string, sessionStore *session.Store, serverRegistry *server.Registry, log internal.Logger) *DefaultServer {
+func NewDefaultServer(addr, secret string, sessionStore *session.Store, serverRegistry *server.Registry, log internal.Logger, readerLimits bool) *DefaultServer {
 	return &DefaultServer{
 		log: log,
 
-		addr:   addr,
-		secret: secret,
+		addr:         addr,
+		secret:       secret,
+		readerLimits: readerLimits,
 
 		clients:            make(map[string]*Client),
 		unconnectedClients: make(map[net.Addr]*Client),
@@ -85,7 +87,7 @@ func (s *DefaultServer) Listen() error {
 			}
 			s.log.Debugf("socket server accepted a new connection")
 
-			go s.handleClient(NewClient(conn, s.log))
+			go s.handleClient(NewClient(conn, s.log, s.readerLimits))
 		}
 	}()
 	return nil

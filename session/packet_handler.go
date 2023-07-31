@@ -6,7 +6,6 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
-	"github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -106,7 +105,7 @@ func handlePackets(s *Session) {
 					continue
 				}
 				ctx := event.C()
-				s.handler().HandleServerDisconnect(ctx)
+				s.handler().HandleServerDisconnect(ctx, err)
 
 				c := false
 				ctx.Continue(func() {

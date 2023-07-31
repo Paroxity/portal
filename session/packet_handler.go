@@ -111,7 +111,7 @@ func handlePackets(s *Session) {
 				ctx.Continue(func() {
 					c = true
 					if disconnect, ok := errors.Unwrap(err).(minecraft.DisconnectError); ok {
-						logrus.Debugln(disconnect.Error())
+						s.log.Debugf(disconnect.Error())
 						_ = s.conn.WritePacket(&packet.Disconnect{Message: disconnect.Error()})
 					}
 					s.Close()

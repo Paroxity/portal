@@ -6,7 +6,7 @@ require (
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.11
-	github.com/sandertv/gophertunnel v1.31.0
+	github.com/sandertv/gophertunnel v1.31.1-0.20230822231139-d4949d32a3ad
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/atomic v1.10.0
@@ -19,6 +19,7 @@ require (
 	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/sandertv/go-raknet v1.12.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/image v0.5.0 // indirect

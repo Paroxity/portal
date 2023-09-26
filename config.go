@@ -90,7 +90,7 @@ func LoadResourcePacks(dir string) ([]*resource.Pack, error) {
 
 	packs := make([]*resource.Pack, 0, len(files))
 	for _, file := range files {
-		pack, err := resource.Compile(filepath.Join(dir, file.Name()))
+		pack, err := resource.ReadURL(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return nil, err
 		}

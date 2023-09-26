@@ -16,7 +16,7 @@ type Handler interface {
 	HandleServerBoundPacket(ctx *event.Context, pk packet.Packet)
 	// HandleServerDisconnect handles the server connection getting closed. ctx.Cancel() may be called after
 	// transferring the player to cancel disconnecting them.
-	HandleServerDisconnect(ctx *event.Context)
+	HandleServerDisconnect(ctx *event.Context, err error)
 	// HandleTransfer handles a session being transferred to another server. ctx.Cancel() may be called to
 	// cancel the transfer.
 	HandleTransfer(ctx *event.Context, svr *server.Server)
@@ -40,7 +40,7 @@ func (NopHandler) HandleClientBoundPacket(*event.Context, packet.Packet) {}
 func (NopHandler) HandleServerBoundPacket(*event.Context, packet.Packet) {}
 
 // HandleServerDisconnect ...
-func (NopHandler) HandleServerDisconnect(*event.Context) {}
+func (NopHandler) HandleServerDisconnect(*event.Context, error) {}
 
 // HandleTransfer ...
 func (NopHandler) HandleTransfer(*event.Context, *server.Server) {}

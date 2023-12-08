@@ -3,7 +3,7 @@ module github.com/paroxity/portal
 go 1.19
 
 require (
-	github.com/go-gl/mathgl v1.0.0
+	github.com/go-gl/mathgl v1.1.0
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.11
 	github.com/sandertv/gophertunnel v1.34.0

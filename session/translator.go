@@ -48,6 +48,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		for i := range pk.EntityLinks {
 			pk.EntityLinks[i] = t.translateEntityLink(pk.EntityLinks[i])
 		}
+	case *packet.AgentAnimation:
+		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.AddItemActor:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
@@ -62,6 +64,7 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		for i := range pk.EntityLinks {
 			pk.EntityLinks[i] = t.translateEntityLink(pk.EntityLinks[i])
 		}
+		pk.AbilityData.EntityUniqueID = t.translateUniqueID(pk.AbilityData.EntityUniqueID)
 	case *packet.AddVolumeEntity:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.AdventureSettings:
@@ -78,6 +81,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.Camera:
 		pk.CameraEntityUniqueID = t.translateUniqueID(pk.CameraEntityUniqueID)
 		pk.TargetPlayerUniqueID = t.translateUniqueID(pk.TargetPlayerUniqueID)
+	case *packet.ChangeMobProperty:
+		pk.EntityUniqueID = t.translateRuntimeID(pk.EntityUniqueID)
 	case *packet.ClientBoundMapItemData:
 		for i, x := range pk.TrackedObjects {
 			if x.Type == protocol.MapObjectTypeEntity {
@@ -85,6 +90,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 				pk.TrackedObjects[i] = x
 			}
 		}
+	case *packet.ClientCheatAbility:
+		pk.AbilityData.EntityUniqueID = t.translateUniqueID(pk.AbilityData.EntityUniqueID)
 	case *packet.CommandBlockUpdate:
 		if !pk.Block {
 			pk.MinecartEntityRuntimeID = t.translateRuntimeID(pk.MinecartEntityRuntimeID)
@@ -190,6 +197,8 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.TakeItemActor:
 		pk.ItemEntityRuntimeID = t.translateRuntimeID(pk.ItemEntityRuntimeID)
 		pk.TakerEntityRuntimeID = t.translateRuntimeID(pk.TakerEntityRuntimeID)
+	case *packet.UpdateAbilities:
+		pk.AbilityData.EntityUniqueID = t.translateUniqueID(pk.AbilityData.EntityUniqueID)
 	case *packet.UpdateAttributes:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.UpdateBlockSynced:

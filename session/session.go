@@ -220,6 +220,7 @@ func (s *Session) Transfer(srv *server.Server) (err error) {
 			for z := int32(-1); z <= 1; z++ {
 				_ = s.conn.WritePacket(&packet.LevelChunk{
 					Position:      protocol.ChunkPos{chunkX + x, chunkZ + z},
+					Dimension:     packet.DimensionNether,
 					SubChunkCount: 1,
 					RawPayload:    emptyChunk(proxyDimension),
 				})

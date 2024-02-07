@@ -152,6 +152,10 @@ func (t *translator) translatePacket(pk packet.Packet) {
 		pk.OwnerEntityUniqueID = t.translateUniqueID(pk.OwnerEntityUniqueID)
 	case *packet.PlayerAction:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
+	case *packet.PlayerAuthInput:
+		if pk.InputData&packet.InputFlagClientPredictedVehicle != 0 {
+			pk.ClientPredictedVehicle = t.translateUniqueID(pk.ClientPredictedVehicle)
+		}
 	case *packet.PlayerList:
 		for i := range pk.Entries {
 			pk.Entries[i].EntityUniqueID = t.translateUniqueID(pk.Entries[i].EntityUniqueID)

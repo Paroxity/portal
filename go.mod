@@ -6,7 +6,7 @@ require (
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.11
-	github.com/sandertv/gophertunnel v1.35.0
+	github.com/sandertv/gophertunnel v1.36.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sirupsen/logrus v1.9.0
 	go.uber.org/atomic v1.10.0

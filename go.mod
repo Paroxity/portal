@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/go-gl/mathgl v1.0.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.5.0
 	github.com/mattn/go-colorable v0.1.11
 	github.com/sandertv/gophertunnel v1.36.0
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e

@@ -206,7 +206,7 @@ func (t *translator) translatePacket(pk packet.Packet) {
 	case *packet.UpdateAttributes:
 		pk.EntityRuntimeID = t.translateRuntimeID(pk.EntityRuntimeID)
 	case *packet.UpdateBlockSynced:
-		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
+		pk.EntityUniqueID = uint64(t.translateUniqueID(int64(pk.EntityUniqueID)))
 	case *packet.UpdateEquip:
 		pk.EntityUniqueID = t.translateUniqueID(pk.EntityUniqueID)
 	case *packet.UpdatePlayerGameType:

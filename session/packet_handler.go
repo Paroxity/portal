@@ -6,6 +6,7 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
+	"net"
 	"sync"
 )
 
@@ -17,7 +18,9 @@ func handlePackets(s *Session) {
 		for {
 			pk, err := s.Conn().ReadPacket()
 			if err != nil {
-				s.log.Errorf("failed to read packet from connection: %v", err)
+				if !errors.Is(err, net.ErrClosed) {
+					s.log.Errorf("failed to read packet from connection: %v", err)
+				}
 				return
 			}
 			s.translatePacket(pk)
